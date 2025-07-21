@@ -1,5 +1,5 @@
 public class GameSettings {
-    static int maxCunksOnSceen = 9;
+    static int maxCunksOnSceen = 25;
 
     public static int MaxCunksOnSceen {
         get {

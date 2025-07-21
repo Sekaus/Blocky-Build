@@ -10,8 +10,18 @@ public partial class PlayerController : RigidBody3D {
 	public float MouseSensitivity = 2f;
 	public Inventory Hotbar = new Inventory(10, 1);
 	public Godot.Collections.Dictionary<int, Control> HotBarGUISlots = new Godot.Collections.Dictionary<int, Control>();
+	bool freeze = true;
+	public bool Freeze { 
+		set {
+			AxisLockLinearY = value;
+			freeze = value;
+		}
+		get { 
+			return freeze; 
+		}
+	}
 
-	Node3D leftHand;
+    Node3D leftHand;
 	Camera3D playerCamera;
 	RayCast3D playerRayCast;
 	Area3D groundArea;
@@ -253,6 +263,9 @@ public partial class PlayerController : RigidBody3D {
 	}
 
 	public override void _Input(InputEvent inputEvent) {
+		if (freeze)
+			return;
+
 		if (inputEvent is InputEventMouseMotion mouseMotion) {
 			// Rotate player and player camera
 			playerRotateX = Mathf.DegToRad(-mouseMotion.Relative.Y);

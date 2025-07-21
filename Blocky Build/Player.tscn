@@ -10,11 +10,12 @@ size = Vector3(0.75, 1.9, 0.75)
 size = Vector3(0.734735, 0.1, 0.736499)
 
 [node name="Player" type="RigidBody3D"]
+axis_lock_linear_y = true
 axis_lock_angular_x = true
 axis_lock_angular_y = true
 axis_lock_angular_z = true
-max_contacts_reported = 1000
 contact_monitor = true
+max_contacts_reported = 1000
 script = ExtResource("1_wiedh")
 
 [node name="HitBox" type="CollisionShape3D" parent="."]

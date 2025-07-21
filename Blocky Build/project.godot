@@ -18,6 +18,10 @@ run/main_scene="res://Game.tscn"
 config/features=PackedStringArray("4.4", "C#", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[autoload]
+
+MainThreadDispatcher="*res://MainThreadDispatcher.tscn"
+
 [dotnet]
 
 project/assembly_name="Blocky Build"

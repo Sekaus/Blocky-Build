@@ -1,10 +1,17 @@
 using Godot;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 public partial class Game : Node {
     [Export]
     public WorldData worldData;
+
+    [Export]
+    public PlayerController[] players;
 
     // Set block in world at xyz
     public void SetBlock(Block newBlock, int x, int y, int z, bool runBlockUpdates = true, Vector3 rotation = new Vector3()) {
@@ -316,51 +323,72 @@ public partial class Game : Node {
             return new Block(true);
     }*/
 
-    private int chunkRadius = 16, bedrockLevel = 0;
-    public override void _Ready() {
+    Thread t;
+    public override async void _Ready() {
         Input.MouseMode = Input.MouseModeEnum.Captured;
 
         Vector3I selectedChunk = new Vector3I(0, 0, 0);
 
         // Genarate first world chunk
 
-        LoadChunk(selectedChunk);
+        await worldData.GenChunk(selectedChunk);
+
+        await worldData.LoadChunk(selectedChunk);
+
+        foreach (var player in players)
+            player.Freeze = false;
 
         // and the rest
 
-        Thread t = new Thread(() =>
-        LoadChunks(new Vector3I[] {
-            new Vector3I(1, 0, 0),
-            new Vector3I(-1, 0, 0),
-            new Vector3I(0, 0, 1),
-            new Vector3I(0, 0, -1),
-            new Vector3I(1, 0, 1),
-            new Vector3I(-1, 0, 1),
-            new Vector3I(-1, 0, -1),
-            new Vector3I(1, 0, -1),
-        }));
+        t = new Thread(async () => await GenChunks(selectedChunk));
 
         t.Start();
     }
 
-    void LoadChunk(Vector3I chunkPosition) {
-        // Genarate world
+    public async Task GenChunks(Vector3I chunkPosition) {
+        List<Vector3I> chunkPositions = new List<Vector3I>(GameSettings.MaxCunksOnSceen);
 
-        worldData.GenChunk(chunkPosition);
+        float sqmcr = (MathF.Sqrt(GameSettings.MaxCunksOnSceen) / 2 - 1);
 
-        // Load world
+        Vector3I startChunk = new Vector3I(-(int)sqmcr, 0, -(int)sqmcr);
+        for(Vector3I correntChunkX = startChunk; correntChunkX.X <= -startChunk.X; correntChunkX.X++) {
+            for (Vector3I correntChunkZ = correntChunkX; correntChunkZ.Z <= -startChunk.Z; correntChunkZ.Z++) {
+                chunkPositions.Add(correntChunkZ);
+            }
+        }
 
-        worldData.LoadChunk(chunkPosition);
+        var semaphore = new SemaphoreSlim(4); // Limit to 4 concurrent chunk generations
+        var tasks = new List<Task>();
+
+        foreach (var _chunkPosition in chunkPositions) {
+            await semaphore.WaitAsync();
+            var task = Task.Run(async () => {
+                try {
+                    await worldData.GenChunk(_chunkPosition);
+                }
+                finally {
+                    semaphore.Release();
+                }
+            });
+
+            tasks.Add(task);
+        }
+
+        await Task.WhenAll(tasks);
+
+        MainThreadDispatcher.Enqueue(() => {
+            LoadChunks();
+        });
     }
 
-    void LoadChunks(Vector3I[] chunkPositions) {
-        foreach (Vector3I chunkPosition in chunkPositions) {
-            LoadChunk(chunkPosition);
-        }
+    async void LoadChunks() {
+        await worldData.LoadChunks();
     }
 
     public override void _Process(double delta) {
         if (Input.IsActionPressed("exit"))
             GetTree().Quit();
+
+        LoadChunks();
     }
 }

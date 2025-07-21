@@ -16,12 +16,13 @@ sky = SubResource("Sky_xkk2x")
 
 [sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_3vrhg"]
 
-[node name="Game" type="Node" node_paths=PackedStringArray("worldData")]
+[node name="Game" type="Node" node_paths=PackedStringArray("worldData", "players")]
 script = ExtResource("1_b2yd6")
 worldData = NodePath("World")
+players = [NodePath("Player")]
 
 [node name="Player" parent="." instance=ExtResource("3_q7ml1")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, 0)
 
 [node name="World" type="Node" parent="."]
 script = ExtResource("2_nwvip")
