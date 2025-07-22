@@ -1,5 +1,7 @@
 using Godot;
+using Microsoft.VisualBasic;
 using System;
+using static Godot.HttpRequest;
 
 public partial class PlayerController : RigidBody3D {
 	[Export]
@@ -262,11 +264,27 @@ public partial class PlayerController : RigidBody3D {
 		playerRotateY = 0f;
 	}
 
+	private void InteractionWithBlock(GodotObject collider, Vector3 collisionPoint) {
+
+		var hitPos = (Vector3)result["position"];
+
+		// Convert world position to block coordinates
+		var blockCoord = new Vector3I(
+			Mathf.FloorToInt(hitPos.X + 0.5f),
+			Mathf.FloorToInt(hitPos.Y + 0.5f),
+			Mathf.FloorToInt(hitPos.Z + 0.5f)
+		);
+
+		if (_blockData.TryGetValue(blockCoord, out var block)) {
+			block.OnClick();
+		}
+	}
+
 	public override void _Input(InputEvent inputEvent) {
 		if (freezeScript)
 			return;
 
-		if (inputEvent is InputEventMouseMotion mouseMotion) {
+        if (inputEvent is InputEventMouseMotion mouseMotion) {
 			// Rotate player and player camera
 			playerRotateX = Mathf.DegToRad(-mouseMotion.Relative.Y);
 			playerRotateY = Mathf.DegToRad(-mouseMotion.Relative.X);
@@ -274,9 +292,10 @@ public partial class PlayerController : RigidBody3D {
 
 		// RayCast Hit
 		if (playerRayCast.CollideWithBodies) {
+			playerRayCast.GetCollisionPoint
 			var collider = playerRayCast.GetCollider();
 			if (collider is Node node) {
-				foreach (string group in node.GetGroups()) {
+                foreach (string group in node.GetGroups()) {
 					if (group == "block") {
 						Block block = (Block)node;
 

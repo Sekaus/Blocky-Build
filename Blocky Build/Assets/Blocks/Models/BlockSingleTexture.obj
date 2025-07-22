@@ -1,5 +1,5 @@
 # Made in Blockbench 4.12.5
-mtllib Block.mtl
+mtllib BlockSingleTexture.mtl
 
 o cube
 v 1 1 1
@@ -11,36 +11,36 @@ v -1 1 1
 v -1 -1 -1
 v -1 -1 1
 vt 0 1
-vt 0.25 1
-vt 0.25 0.75
-vt 0 0.75
-vt 0 0.75
-vt 0.25 0.75
-vt 0.25 0.5
-vt 0 0.5
-vt 0.5 1
-vt 0.75 1
-vt 0.75 0.75
-vt 0.5 0.75
-vt 0 0.5
-vt 0.25 0.5
-vt 0.25 0.25
-vt 0 0.25
-vt 0.5 0.75
-vt 0.25 0.75
-vt 0.25 1
-vt 0.5 1
-vt 0.5 0.75
-vt 0.25 0.75
-vt 0.25 0.5
-vt 0.5 0.5
+vt 1 1
+vt 1 0
+vt 0 0
+vt 0 1
+vt 1 1
+vt 1 0
+vt 0 0
+vt 0 1
+vt 1 1
+vt 1 0
+vt 0 0
+vt 0 1
+vt 1 1
+vt 1 0
+vt 0 0
+vt 0 1
+vt 1 1
+vt 1 0
+vt 0 0
+vt 0 1
+vt 1 1
+vt 1 0
+vt 0 0
 vn 0 0 -1
 vn 1 0 0
 vn 0 0 1
 vn -1 0 0
 vn 0 1 0
 vn 0 -1 0
-usemtl m_f7dd849b-7337-2f4a-31bb-d38667a6525d
+usemtl none
 f 4/4/1 7/3/1 5/2/1 2/1/1
 f 3/8/2 4/7/2 2/6/2 1/5/2
 f 8/12/3 3/11/3 1/10/3 6/9/3

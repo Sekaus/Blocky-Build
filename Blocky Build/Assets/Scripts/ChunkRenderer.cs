@@ -60,6 +60,7 @@ public partial class ChunkRenderer : Node3D {
         // Position collision body at the same origin as the mesh
         body.Transform = new Transform3D(Basis.Identity, origin);
         body.AddChild(shapeNode);
+        body.AddToGroup("chunk");
         AddChild(body);
         _collisionBodies[chunkPos] = body;
     }

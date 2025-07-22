@@ -4,8 +4,8 @@
 [ext_resource type="ArrayMesh" uid="uid://dlryyov62cyf6" path="res://Assets/Blocks/Models/Roof.obj" id="2_2vsmo"]
 [ext_resource type="Texture2D" uid="uid://c0kbsxjfja8qu" path="res://Assets/Blocks/Textures/OkePlanks.png" id="3_wv7e0"]
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_ce2qt"]
-points = PackedVector3Array(0.5, 0, 0.5, 0.5, 0, -0.5, -0.5, 0, 0.5, -0.5, 0, -0.5, 0.5, 1, 0.5)
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_yvemp"]
+points = PackedVector3Array(0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, 0.5)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0vg20"]
 resource_local_to_scene = true
@@ -17,8 +17,7 @@ Type = 2
 canBeConnected = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
-shape = SubResource("ConvexPolygonShape3D_ce2qt")
+shape = SubResource("ConvexPolygonShape3D_yvemp")
 
 [node name="Mesh" type="CSGMesh3D" parent="."]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)

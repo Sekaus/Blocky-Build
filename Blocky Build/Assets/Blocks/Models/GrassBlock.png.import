@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dnq528sonc1op"
-path.s3tc="res://.godot/imported/GrassBlock.png-6f10d0305ef36357b3bbdbe3ddc037bd.s3tc.ctex"
+uid="uid://dqc70l7ihd0nq"
+path.s3tc="res://.godot/imported/GrassBlock.png-a86e403f07e126e3ae8bc364966f614a.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://Assets/Blocks/GrassBlock.png"
-dest_files=["res://.godot/imported/GrassBlock.png-6f10d0305ef36357b3bbdbe3ddc037bd.s3tc.ctex"]
+source_file="res://Assets/Blocks/Models/GrassBlock.png"
+dest_files=["res://.godot/imported/GrassBlock.png-a86e403f07e126e3ae8bc364966f614a.s3tc.ctex"]
 
 [params]
 
@@ -20,7 +20,7 @@ compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
-compress/normal_map=1
+compress/normal_map=0
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1
