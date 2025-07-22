@@ -6,12 +6,17 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-public partial class Game : Node {
-    [Export]
-    public WorldData worldData;
+public partial class Client : Node {
+    WorldData worldData;
+    ChunkRenderer chunkRenderer;
 
-    [Export]
-    public PlayerController[] players;
+    public WorldData WorldData {
+        get { 
+            return worldData; 
+        }
+    }
+
+    PlayerController player;
 
     // Set block in world at xyz
     public void SetBlock(Block newBlock, int x, int y, int z, bool runBlockUpdates = true, Vector3 rotation = new Vector3()) {
@@ -323,37 +328,70 @@ public partial class Game : Node {
             return new Block(true);
     }*/
 
-    Thread t;
-    public override async void _Ready() {
+    public override void _Ready() {
+        player = GetNode<PlayerController>("%Player");
+        worldData = GetNode<WorldData>("%World");
+        chunkRenderer = GetNode<ChunkRenderer>("%ChunkRenderer");
+
         Input.MouseMode = Input.MouseModeEnum.Captured;
 
         Vector3I selectedChunk = new Vector3I(0, 0, 0);
 
         // Genarate first world chunk
 
-        await worldData.GenChunk(selectedChunk);
+        Owner.Ready += async () => {
+            await InitializeAsync(selectedChunk);
+        };
 
-        await worldData.LoadChunk(selectedChunk);
+        player.FreezeScript = false;
 
-        foreach (var player in players)
-            player.Freeze = false;
+        int chunkDiameter = (GameSettings.ChunkRadius * 2 + 1);
+        Vector3I relativeChunk = new Vector3I(
+            (int)MathF.Round(player.Position.X / chunkDiameter),
+            0,
+            (int)MathF.Round(player.Position.Y / chunkDiameter)
+        );
 
-        // and the rest
+        if (!player.CorrentChunk.HasValue || player.CorrentChunk.Value != relativeChunk) {
+            player.CorrentChunk = relativeChunk;
+            Vector3I chunkToGenerate = relativeChunk;
 
-        t = new Thread(async () => await GenChunks(selectedChunk));
-
-        t.Start();
+            _ = Task.Run(async () => {
+                try {
+                    await GenChunks(chunkToGenerate);
+                    MainThreadDispatcher.Enqueue(() => LoadChunks());
+                }
+                catch (Exception ex) {
+                    GD.PrintErr("Error in GenChunks task: " + ex.Message);
+                }
+            });
+        }
     }
 
-    public async Task GenChunks(Vector3I chunkPosition) {
+    private async Task InitializeAsync(Vector3I selectedChunk) {
+        await worldData.GenChunk(selectedChunk);
+
+        RendererChunk(selectedChunk);
+    }
+
+    private void RendererChunk(Vector3I selectedChunk) {
+        chunkRenderer.BuildChunkMesh(selectedChunk, worldData.GetChunk(selectedChunk).Blocks);
+    }
+
+    private void RendererChunks() {
+        Vector3I[] chunkPositions = worldData.GetChunkPositions();
+        foreach(var chunkPosition in chunkPositions)
+            RendererChunk(chunkPosition);
+    }
+
+    private async Task GenChunks(Vector3I chunkPosition) {
         List<Vector3I> chunkPositions = new List<Vector3I>(GameSettings.MaxCunksOnSceen);
 
         float sqmcr = (MathF.Sqrt(GameSettings.MaxCunksOnSceen) / 2 - 1);
 
-        Vector3I startChunk = new Vector3I(-(int)sqmcr, 0, -(int)sqmcr);
-        for(Vector3I correntChunkX = startChunk; correntChunkX.X <= -startChunk.X; correntChunkX.X++) {
-            for (Vector3I correntChunkZ = correntChunkX; correntChunkZ.Z <= -startChunk.Z; correntChunkZ.Z++) {
-                chunkPositions.Add(correntChunkZ);
+        for (int x = -(int)sqmcr; x <= (int)sqmcr; x++) {
+            for (int z = -(int)sqmcr; z <= (int)sqmcr; z++) {
+                chunkPositions.Add(new Vector3I(x + chunkPosition.X, 0, z + chunkPosition.Z));
             }
         }
 
@@ -375,20 +413,18 @@ public partial class Game : Node {
         }
 
         await Task.WhenAll(tasks);
-
-        MainThreadDispatcher.Enqueue(() => {
-            LoadChunks();
-        });
     }
 
-    async void LoadChunks() {
-        await worldData.LoadChunks();
+    private void LoadChunks() {
+        RendererChunks();
+    }
+
+    public override void _PhysicsProcess(double delta) {
+        
     }
 
     public override void _Process(double delta) {
         if (Input.IsActionPressed("exit"))
             GetTree().Quit();
-
-        LoadChunks();
     }
 }

@@ -6,74 +6,61 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using static Godot.HttpRequest;
+using static System.Reflection.Metadata.BlobBuilder;
 
 public class Chunk {
-    private readonly System.Collections.Generic.Dictionary<Vector3I, Block> blocks = new();
-    private readonly object blockLock = new();
+    public readonly Vector3I Position;
+    // Pure data: which block type belongs at which coordinate
+    private readonly System.Collections.Generic.Dictionary<Vector3I, string> _rawBlocks = new();
+    public System.Collections.Generic.Dictionary<Vector3I, string> Blocks {
+        get { 
+            return _rawBlocks; 
+        }
+    }
 
-    private readonly TaskCompletionSource<bool> readySource = new();
-    public Task ReadyTask => readySource.Task;
-
-    private readonly ConcurrentQueue<Block> culledBlocks = new();
-    public ConcurrentQueue<Block> Blocks => culledBlocks;
+    private readonly TaskCompletionSource<bool> _dataReady = new();
+    public Task DataReady => _dataReady.Task;
 
     public Chunk(Vector3I chunkPosition, WorldData.WorldType worldType, WorldData.WorldLayer[][] worldLayers) {
-        Task.Run(() => GenChunk(chunkPosition, worldType, worldLayers));
+        Position = chunkPosition;
+        // Kick off only your pure-data work in the threadpool:
+        ThreadPool.QueueUserWorkItem(_ => GenerateRawData(worldType, worldLayers));
     }
 
-    private void GenChunk(Vector3I atChunk, WorldData.WorldType worldType, WorldData.WorldLayer[][] worldLayers) {
-        lock (blockLock) {
-            int atLayer = GameSettings.DefaultBedrockLevel;
-            Vector3I offset = atChunk * GameSettings.ChunkRadius;
+    private void GenerateRawData(WorldData.WorldType worldType, WorldData.WorldLayer[][] worldLayers) {
+        var offset = Position * GameSettings.ChunkRadius;
+        int atLayer = GameSettings.DefaultBedrockLevel;
 
-            foreach (var worldLayer in worldLayers[(int)worldType]) {
-                for (int y = atLayer; y < atLayer + worldLayer.height; y++) {
-                    for (int x = -GameSettings.ChunkRadius + offset.X; x < GameSettings.ChunkRadius + offset.X; x++) {
-                        for (int z = -GameSettings.ChunkRadius + offset.Z; z < GameSettings.ChunkRadius + offset.Z; z++) {
-                            var newBlock = Register.Blocks[worldLayer.blockName]?.Instantiate<Block>();
-                            var pos = new Vector3I(x, y, z);
-                            newBlock.Translate(pos);
-                            blocks[pos] = newBlock;
-                        }
+        foreach (var layer in worldLayers[(int)worldType]) {
+            for (int y = atLayer; y < atLayer + layer.height; y++) {
+                for (int x = -GameSettings.ChunkRadius + offset.X;
+                     x < GameSettings.ChunkRadius + offset.X; x++) {
+                    for (int z = -GameSettings.ChunkRadius + offset.Z;
+                         z < GameSettings.ChunkRadius + offset.Z; z++) {
+                        _rawBlocks.Add(new Vector3I(x, y, z), layer.blockName);
                     }
                 }
-                atLayer += worldLayer.height;
             }
+            atLayer += layer.height;
         }
 
-        readySource.TrySetResult(true);
+        _dataReady.TrySetResult(true);
     }
 
-    public async Task CullChunk(CancellationToken ct = default) {
-        System.Collections.Generic.Dictionary<Vector3I, Block> snapshot;
-
-        lock (blockLock) {
-            snapshot = new System.Collections.Generic.Dictionary<Vector3I, Block>(blocks);
-        }
-
-        var keys = snapshot.Keys.ToHashSet();
-
-        var options = new ParallelOptions {
-            CancellationToken = ct,
-            MaxDegreeOfParallelism = System.Environment.ProcessorCount
-        };
-
-        await Parallel.ForEachAsync(snapshot, options, (kv, token) => {
-            var key = kv.Key;
-            var block = kv.Value;
-
-            bool isExposed = !keys.Contains(new(key.X + 1, key.Y, key.Z)) ||
-                             !keys.Contains(new(key.X - 1, key.Y, key.Z)) ||
-                             !keys.Contains(new(key.X, key.Y + 1, key.Z)) ||
-                             !keys.Contains(new(key.X, key.Y - 1, key.Z)) ||
-                             !keys.Contains(new(key.X, key.Y, key.Z + 1)) ||
-                             !keys.Contains(new(key.X, key.Y, key.Z - 1));
+    /*public void CullChunk() {
+        Parallel.ForEach(_rawBlocks, block => {
+            int X = block.Key.X;
+            int Y = block.Key.Y;
+            int Z = block.Key.Z;
+            bool isExposed = !_rawBlocks.ContainsKey(new(X + 1, Y, Z)) ||
+                             !_rawBlocks.ContainsKey(new(X - 1, Y, Z)) ||
+                             !_rawBlocks.ContainsKey(new(X, Y + 1, Z)) ||
+                             !_rawBlocks.ContainsKey(new(X, Y - 1, Z)) ||
+                             !_rawBlocks.ContainsKey(new(X, Y, Z + 1)) ||
+                             !_rawBlocks.ContainsKey(new(X, Y, Z - 1));
 
             if (isExposed)
-                culledBlocks.Enqueue(block);
-
-            return ValueTask.CompletedTask;
+                culledBlocks.TryAdd(block.Key, block.Value);
         });
-    }
+    }*/
 }

@@ -10,14 +10,16 @@ public partial class PlayerController : RigidBody3D {
 	public float MouseSensitivity = 2f;
 	public Inventory Hotbar = new Inventory(10, 1);
 	public Godot.Collections.Dictionary<int, Control> HotBarGUISlots = new Godot.Collections.Dictionary<int, Control>();
-	bool freeze = true;
-	public bool Freeze { 
+	bool freezeScript = true;
+    public Vector3I? CorrentChunk = null;
+
+    public bool FreezeScript { 
 		set {
 			AxisLockLinearY = value;
-			freeze = value;
+			freezeScript = value;
 		}
 		get { 
-			return freeze; 
+			return freezeScript; 
 		}
 	}
 
@@ -26,8 +28,7 @@ public partial class PlayerController : RigidBody3D {
 	RayCast3D playerRayCast;
 	Area3D groundArea;
 
-	Game game;
-	WorldData worldData;
+	Client client;
 	Control inventoryGUI;
 
 	WeakReference<CsgMesh3D> blockInFocusRef = new WeakReference<CsgMesh3D>(null);
@@ -172,8 +173,7 @@ public partial class PlayerController : RigidBody3D {
 	}
 
 	public override void _Ready() {
-		game = GetParent<Game>();
-		worldData = game.worldData; // this will be used later...
+		client = GetParent<Client>();
 		leftHand = GetNode<Node3D>("%LeftHand");
 		playerCamera = GetNode<Camera3D>("%PlayerCamera");
 		playerRayCast = GetNode<RayCast3D>("%PlayerRayCast");
@@ -263,7 +263,7 @@ public partial class PlayerController : RigidBody3D {
 	}
 
 	public override void _Input(InputEvent inputEvent) {
-		if (freeze)
+		if (freezeScript)
 			return;
 
 		if (inputEvent is InputEventMouseMotion mouseMotion) {
@@ -318,7 +318,7 @@ public partial class PlayerController : RigidBody3D {
 
 						if (Input.IsActionJustPressed("hit_and_remove")) {
 							if (block.BlockName != "Bedrock") {
-								game.RemoveBlock(Mathf.RoundToInt(block.Position.X), Mathf.RoundToInt(block.Position.Y), Mathf.RoundToInt(block.Position.Z));
+								client.RemoveBlock(Mathf.RoundToInt(block.Position.X), Mathf.RoundToInt(block.Position.Y), Mathf.RoundToInt(block.Position.Z));
 								blockInFocusRef.SetTarget(null);
 							}
 						}
@@ -342,11 +342,11 @@ public partial class PlayerController : RigidBody3D {
 								}
 
 								if (block.BlockName != "Grass")
-									game.SetBlock(newBlock, Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y), Mathf.RoundToInt(newBlockPose.Z), true, rotation);
+									client.SetBlock(newBlock, Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y), Mathf.RoundToInt(newBlockPose.Z), true, rotation);
 								else {
 									if (GetItemInLeftHand() != "") {
-										game.RemoveBlock(Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y - 1), Mathf.RoundToInt(newBlockPose.Z));
-										game.SetBlock(newBlock, Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y - 1), Mathf.RoundToInt(newBlockPose.Z), true, rotation);
+										client.RemoveBlock(Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y - 1), Mathf.RoundToInt(newBlockPose.Z));
+										client.SetBlock(newBlock, Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y - 1), Mathf.RoundToInt(newBlockPose.Z), true, rotation);
 									}
 								}
 							}

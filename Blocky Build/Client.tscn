@@ -1,0 +1,21 @@
+[gd_scene load_steps=5 format=3 uid="uid://dxetwwdwbjn36"]
+
+[ext_resource type="Script" uid="uid://dl3n6xrtncl4x" path="res://Assets/Scripts/Client.cs" id="1_xoegg"]
+[ext_resource type="PackedScene" uid="uid://b56rds5e6x5ms" path="res://Player.tscn" id="2_gx7ox"]
+[ext_resource type="Script" uid="uid://cdvse7vlat2ui" path="res://Assets/Scripts/WorldData.cs" id="3_5crva"]
+[ext_resource type="Script" uid="uid://bu2w03ut3cnw7" path="res://Assets/Scripts/ChunkRenderer.cs" id="4_xoegg"]
+
+[node name="Client" type="Node"]
+script = ExtResource("1_xoegg")
+
+[node name="Player" parent="." instance=ExtResource("2_gx7ox")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20, 0)
+
+[node name="World" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("3_5crva")
+
+[node name="ChunkRenderer" type="Node3D" parent="World"]
+unique_name_in_owner = true
+script = ExtResource("4_xoegg")
