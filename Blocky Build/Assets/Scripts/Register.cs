@@ -4,9 +4,12 @@ using static System.Reflection.Metadata.BlobBuilder;
 
 // This is the register over all content in this game
 public partial class Register : Node {
+    public static CSharpScript DefaultBlockBehaviorScript = GD.Load<CSharpScript>("res://Assets/Scripts/BlockBehaviorScripts/Default.cs");
+
     [Export]
     public PackedScene[] BlockScenes;
     public static Godot.Collections.Dictionary<string, RegisterVariant> Blocks  = new Godot.Collections.Dictionary<string, RegisterVariant>();
+    public static readonly System.Collections.Generic.Dictionary<string, BlockData> BlockDataMap = new();
 
     [Export]
     public PackedScene[] ItemScenes;
@@ -178,6 +181,8 @@ public partial class Register : Node {
                     throw new InvalidOperationException($"Expected dictionary but found {Blocks[blockSceneInstance.VariationOfBlock].ToVariant().Obj.GetType().Name}");
             }
 
+            var data = new BlockData(blockSceneInstance);
+            BlockDataMap[blockSceneInstance.BlockName] = data;
             blockSceneInstance.QueueFree();
         }
 

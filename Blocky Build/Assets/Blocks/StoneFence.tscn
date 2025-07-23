@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://cmjbskceaxv0s"]
+[gd_scene load_steps=7 format=3 uid="uid://cmjbskceaxv0s"]
 
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_q4tnj"]
 [ext_resource type="ArrayMesh" uid="uid://cpahufq8t8iyp" path="res://Assets/Blocks/Models/Fence.obj" id="2_3hahk"]
+[ext_resource type="Script" uid="uid://iogv5dao5ogo" path="res://Assets/Scripts/BlockBehaviorScripts/Default.cs" id="2_tcalu"]
 [ext_resource type="Texture2D" uid="uid://5l6wi68vvt5g" path="res://Assets/Blocks/Textures/Stone.png" id="3_s52ax"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_68vqy"]
@@ -14,6 +15,7 @@ albedo_texture = ExtResource("3_s52ax")
 [node name="StoneFence" type="StaticBody3D" groups=["block"]]
 script = ExtResource("1_q4tnj")
 Type = 1
+BehaviorScript = ExtResource("2_tcalu")
 
 [node name="CollisionShape" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.000671387, 0, -0.000610352)

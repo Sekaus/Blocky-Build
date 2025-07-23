@@ -1,5 +1,6 @@
 public class GameSettings {
-    static int maxCunksOnSceen = 64;
+    public const int maxCunksOnSceen = 64;
+    public const float BlockSize = 0.5f;
 
     public static int MaxCunksOnSceen {
         get {
@@ -17,6 +18,18 @@ public class GameSettings {
         get { 
             return 512; 
         } 
+    }
+
+    public static float ChunkSize {
+        get {
+            return ChunkRadius * BlockSize * BlockRenderScale;
+        }
+    }
+
+    public static int BlockRenderScale {
+        get {
+            return 2;
+        }
     }
 
     public static int DefaultBedrockLevel { 

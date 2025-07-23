@@ -13,7 +13,6 @@ texture_filter = 2
 [node name="GlassBlock" type="StaticBody3D" groups=["block"]]
 script = ExtResource("1_swrg8")
 Tags = PackedStringArray("glass")
-canBeConnected = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("BoxShape3D_itk8u")

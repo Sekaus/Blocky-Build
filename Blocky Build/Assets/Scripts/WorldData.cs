@@ -10,8 +10,12 @@ using static System.Reflection.Metadata.BlobBuilder;
 public partial class WorldData : Node {
     private readonly ConcurrentDictionary<Vector3I, Chunk> genChunks = new();
 
-    public Chunk GetChunk(Vector3I chunkPosition) { 
-        return genChunks[chunkPosition];
+    public (bool, Chunk) GetChunk(Vector3I chunkPosition) { 
+        bool gotSomething = genChunks.TryGetValue(chunkPosition, out var chunk);
+
+        if (gotSomething)
+            return (true, chunk);
+        return (false, null);
     }
 
     public Vector3I[] GetChunkPositions () {
@@ -40,7 +44,7 @@ public partial class WorldData : Node {
     }
 
     public async Task GenChunk(Vector3I chunkPosition) {
-        var chunk = new Chunk(chunkPosition, Type, worldTypeLayers);
+        var chunk = new Chunk(chunkPosition, this, worldTypeLayers);
         genChunks[chunkPosition] = chunk;
         await chunk.DataReady;
     }

@@ -26,7 +26,7 @@ public partial class ChunkRenderer : Node3D {
         }
     }
 
-    public void BuildChunkMesh(Vector3I chunkPos, System.Collections.Generic.Dictionary<Vector3I, string> blocks) {
+    public void BuildChunkMesh(Vector3I chunkPos, System.Collections.Generic.Dictionary<Vector3I, BlockData> blocks) {
         // Remove old mesh instance if exists
         if (_chunkInstances.TryGetValue(chunkPos, out var oldMesh)) {
             oldMesh.QueueFree();
@@ -65,13 +65,13 @@ public partial class ChunkRenderer : Node3D {
         _collisionBodies[chunkPos] = body;
     }
 
-    private ArrayMesh BuildCombinedMesh(System.Collections.Generic.Dictionary<Vector3I, string> blocks, Vector3 origin) {
+    private ArrayMesh BuildCombinedMesh(System.Collections.Generic.Dictionary<Vector3I, BlockData> blocks, Vector3 origin) {
         var mesh = new ArrayMesh();
         // Group by block type
         var groups = new System.Collections.Generic.Dictionary<string, List<Vector3I>>();
         foreach (var kv in blocks) {
-            if (!groups.TryGetValue(kv.Value, out var list))
-                list = groups[kv.Value] = new List<Vector3I>();
+            if (!groups.TryGetValue(kv.Value.BlockName, out var list))
+                list = groups[kv.Value.BlockName] = new List<Vector3I>();
             list.Add(kv.Key);
         }
         // Build surfaces
@@ -87,7 +87,7 @@ public partial class ChunkRenderer : Node3D {
             int vertBase = 0;
 
             foreach (var coord in kv.Value) {
-                var basePos = coord * 2;
+                var basePos = coord * GameSettings.BlockRenderScale;
                 for (int s = 0; s < srcMesh.GetSurfaceCount(); s++) {
                     var arr = srcMesh.SurfaceGetArrays(s);
                     var sv = (Vector3[])arr[(int)ArrayMesh.ArrayType.Vertex];

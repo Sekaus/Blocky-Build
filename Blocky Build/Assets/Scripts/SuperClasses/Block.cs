@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public partial class Block : StaticBody3D {
+public partial class Block : Node3D {
     [Export]
     public Texture Particle;
     [Export]
@@ -15,9 +15,15 @@ public partial class Block : StaticBody3D {
     [Export]
     public string[] Tags;
     [Export]
-    public bool canBeConnected = true;
+    public bool CanBeConnected = true;
+    [Export]
+    public Resource BehaviorScriptResource; // shows in editor
 
+    public CSharpScript BehaviorScript => BehaviorScriptResource as CSharpScript;
+
+    [Export]
     public bool Unbreakable = false;
+
     public FacingDirections FacingDirection = FacingDirections.Forward;
     public bool UpsideDown = false;
 
@@ -54,8 +60,4 @@ public partial class Block : StaticBody3D {
     public Block(bool noFacing) {
         FacingDirection = FacingDirections.None;
     }
-    
-    // Event handlers
-
-    public virtual void OnClick() { }
 }

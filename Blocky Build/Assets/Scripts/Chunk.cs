@@ -11,8 +11,8 @@ using static System.Reflection.Metadata.BlobBuilder;
 public class Chunk {
     public readonly Vector3I Position;
     // Pure data: which block type belongs at which coordinate
-    private readonly System.Collections.Generic.Dictionary<Vector3I, string> _rawBlocks = new();
-    public System.Collections.Generic.Dictionary<Vector3I, string> Blocks {
+    private readonly System.Collections.Generic.Dictionary<Vector3I, BlockData> _rawBlocks = new();
+    public System.Collections.Generic.Dictionary<Vector3I, BlockData> Blocks {
         get { 
             return _rawBlocks; 
         }
@@ -21,23 +21,25 @@ public class Chunk {
     private readonly TaskCompletionSource<bool> _dataReady = new();
     public Task DataReady => _dataReady.Task;
 
-    public Chunk(Vector3I chunkPosition, WorldData.WorldType worldType, WorldData.WorldLayer[][] worldLayers) {
+    public Chunk(Vector3I chunkPosition, WorldData worldData, WorldData.WorldLayer[][] worldLayers) {
         Position = chunkPosition;
         // Kick off only your pure-data work in the threadpool:
-        ThreadPool.QueueUserWorkItem(_ => GenerateRawData(worldType, worldLayers));
+        ThreadPool.QueueUserWorkItem(_ => GenerateRawData(worldData, worldLayers));
     }
 
-    private void GenerateRawData(WorldData.WorldType worldType, WorldData.WorldLayer[][] worldLayers) {
+    private void GenerateRawData(WorldData worldData, WorldData.WorldLayer[][] worldLayers) {
         var offset = Position * GameSettings.ChunkRadius;
         int atLayer = GameSettings.DefaultBedrockLevel;
 
-        foreach (var layer in worldLayers[(int)worldType]) {
+        foreach (var layer in worldLayers[(int)worldData.Type]) {
             for (int y = atLayer; y < atLayer + layer.height; y++) {
                 for (int x = -GameSettings.ChunkRadius + offset.X;
                      x < GameSettings.ChunkRadius + offset.X; x++) {
                     for (int z = -GameSettings.ChunkRadius + offset.Z;
                          z < GameSettings.ChunkRadius + offset.Z; z++) {
-                        _rawBlocks.Add(new Vector3I(x, y, z), layer.blockName);
+                        Vector3I blockPosition = new Vector3I(x, y, z);
+                        BlockData blockData = Register.BlockDataMap[layer.blockName];
+                        _rawBlocks.Add(blockPosition, blockData);
                     }
                 }
             }

@@ -1,6 +1,7 @@
-[gd_scene load_steps=6 format=3 uid="uid://bru81tavte74j"]
+[gd_scene load_steps=7 format=3 uid="uid://bru81tavte74j"]
 
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_l14co"]
+[ext_resource type="Script" uid="uid://iogv5dao5ogo" path="res://Assets/Scripts/BlockBehaviorScripts/Default.cs" id="2_1kprr"]
 [ext_resource type="ArrayMesh" uid="uid://bqj1gho5n5yrx" path="res://Assets/Blocks/Models/RoofConnectedB.obj" id="2_mx3bn"]
 [ext_resource type="Texture2D" uid="uid://c0kbsxjfja8qu" path="res://Assets/Blocks/Textures/OkePlanks.png" id="3_5crhb"]
 
@@ -15,7 +16,7 @@ albedo_texture = ExtResource("3_5crhb")
 script = ExtResource("1_l14co")
 Type = 2
 VariationOfBlock = "OkeRoof"
-canBeConnected = false
+BehaviorScript = ExtResource("2_1kprr")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)

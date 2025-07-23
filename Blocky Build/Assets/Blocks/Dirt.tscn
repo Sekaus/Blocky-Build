@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://bkxs2teghlvrk"]
+[gd_scene load_steps=7 format=3 uid="uid://bkxs2teghlvrk"]
 
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_ujiux"]
 [ext_resource type="ArrayMesh" uid="uid://c7ndri83186av" path="res://Assets/Blocks/Models/BlockSingleTexture.obj" id="2_oia5f"]
+[ext_resource type="Script" uid="uid://iogv5dao5ogo" path="res://Assets/Scripts/BlockBehaviorScripts/Default.cs" id="2_quxlc"]
 [ext_resource type="Texture2D" uid="uid://t6g10xab6777" path="res://Assets/Blocks/Textures/Dirt.png" id="3_5fx2t"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bensk"]
@@ -14,6 +15,7 @@ texture_filter = 2
 [node name="Dirt" type="StaticBody3D" groups=["block"]]
 script = ExtResource("1_ujiux")
 Tags = PackedStringArray("dirt")
+BehaviorScript = ExtResource("2_quxlc")
 
 [node name="CollisionShape" type="CollisionShape3D" parent="."]
 shape = SubResource("BoxShape3D_bensk")

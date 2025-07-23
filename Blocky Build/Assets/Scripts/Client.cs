@@ -6,9 +6,11 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 public partial class Client : Node {
     WorldData worldData;
     ChunkRenderer chunkRenderer;
+    Node3D blockHighlight;
 
     public WorldData WorldData {
         get { 
@@ -173,13 +175,13 @@ public partial class Client : Node {
         bool connectionToBlockBackward = false;
 
         if (blockThatExecute.Type == Block.BlockType.Fence) {
-            if (blocksToUpdate["Right"].BlockName != "" && blocksToUpdate["Right"].canBeConnected)
+            if (blocksToUpdate["Right"].BlockName != "" && blocksToUpdate["Right"].CanBeConnected)
                 connectionToBlockRight = true;
-            if (blocksToUpdate["Left"].BlockName != "" && blocksToUpdate["Left"].canBeConnected)
+            if (blocksToUpdate["Left"].BlockName != "" && blocksToUpdate["Left"].CanBeConnected)
                 connectionToBlockLeft = true;
-            if (blocksToUpdate["Forward"].BlockName != "" && blocksToUpdate["Forward"].canBeConnected)
+            if (blocksToUpdate["Forward"].BlockName != "" && blocksToUpdate["Forward"].CanBeConnected)
                 connectionToBlockForward = true;
-            if (blocksToUpdate["Backward"].BlockName != "" && blocksToUpdate["Backward"].canBeConnected)
+            if (blocksToUpdate["Backward"].BlockName != "" && blocksToUpdate["Backward"].CanBeConnected)
                 connectionToBlockBackward = true;
 
             if (connectionToBlockRight && connectionToBlockLeft && connectionToBlockForward && connectionToBlockBackward) {
@@ -332,6 +334,8 @@ public partial class Client : Node {
         player = GetNode<PlayerController>("%Player");
         worldData = GetNode<WorldData>("%World");
         chunkRenderer = GetNode<ChunkRenderer>("%ChunkRenderer");
+        blockHighlight = GetNode<Node3D>("%BlcokHighlight");
+        blockHighlight.Scale = Vector3.One * GameSettings.BlockRenderScale * 1.00005f;
 
         Input.MouseMode = Input.MouseModeEnum.Captured;
 
@@ -375,7 +379,10 @@ public partial class Client : Node {
     }
 
     private void RendererChunk(Vector3I selectedChunk) {
-        chunkRenderer.BuildChunkMesh(selectedChunk, worldData.GetChunk(selectedChunk).Blocks);
+        var chunk = worldData.GetChunk(selectedChunk);
+        
+        if(chunk.Item1)
+            chunkRenderer.BuildChunkMesh(selectedChunk, chunk.Item2.Blocks);
     }
 
     private void RendererChunks() {
@@ -417,6 +424,85 @@ public partial class Client : Node {
 
     private void LoadChunks() {
         RendererChunks();
+    }
+
+    public bool InteractionWithBlock(GodotObject collider, Vector3 collisionPoint, out BlockBehavior blockBehavior, out Vector3I blockPosition) {
+        GetChunkAndLocalBlockCoord(collisionPoint, out var chunkCoord, out var localBlockCoord, out var globalBlockCoord);
+
+        var chunk = worldData.GetChunk(chunkCoord);
+
+        if (chunk.Item1) {
+            if (chunk.Item2.Blocks.TryGetValue(globalBlockCoord, out var blockData)) {
+                // Apply highlight
+                blockHighlight.Visible = true;
+                blockHighlight.Position = globalBlockCoord * GameSettings.BlockRenderScale;
+
+                CSharpScript scriptToUse = blockData.BehaviorScript ?? Register.DefaultBlockBehaviorScript;
+
+                var beh = scriptToUse.New().As<BlockBehavior>();
+                if (beh != null) {
+                    var worldBlockSize = GameSettings.BlockSize * GameSettings.BlockRenderScale;
+                    var worldPos = new Vector3(globalBlockCoord.X, globalBlockCoord.Y, globalBlockCoord.Z) * worldBlockSize;
+                    beh.Setup(
+                        worldData,
+                        new Transform3D(Basis.Identity, globalBlockCoord),
+                        chunk.Item2
+                    );
+                    blockBehavior = beh;
+                    blockPosition = globalBlockCoord;
+                    return true;
+                }
+                else {
+                    GD.PrintErr("Failed to create behavior for block at ", globalBlockCoord);
+                }
+            }
+        }
+        // Remove highlight
+        blockHighlight.Visible = false;
+        blockBehavior = null;
+        blockPosition = Vector3I.Zero;
+        return false;
+    }
+
+    public static void GetChunkAndLocalBlockCoord(Vector3 worldPos, out Vector3I chunkCoord, out Vector3I localBlockCoord, out Vector3I globalBlockCoord) {
+        float baseBlockSize = GameSettings.BlockSize;
+        int renderScale = GameSettings.BlockRenderScale;
+        float worldBlockSize = baseBlockSize * renderScale;
+
+        // Number of blocks along one edge of a chunk
+        int blocksPerChunk = GameSettings.ChunkRadius * 2;
+
+        // World size of one chunk (in world units)
+        float chunkSizeWorld = blocksPerChunk * worldBlockSize;
+        float chunkHeightWorld = GameSettings.ChunkHeight * worldBlockSize;
+
+        // Which chunk?
+        chunkCoord = new Vector3I(
+            Mathf.FloorToInt(worldPos.X / chunkSizeWorld),
+            Mathf.FloorToInt(worldPos.Y / chunkHeightWorld),
+            Mathf.FloorToInt(worldPos.Z / chunkSizeWorld)
+        );
+
+        // Local block index within that chunk [0 .. blocksPerChunk-1]
+        Vector3 chunkOrigin = new Vector3(
+            chunkCoord.X * chunkSizeWorld,
+            chunkCoord.Y * chunkHeightWorld,
+            chunkCoord.Z * chunkSizeWorld
+        );
+
+        Vector3 localPos = (worldPos - chunkOrigin) / worldBlockSize;
+        localBlockCoord = new Vector3I(
+            Mathf.FloorToInt(localPos.X),
+            Mathf.FloorToInt(localPos.Y),
+            Mathf.FloorToInt(localPos.Z)
+        );
+
+        // Recombine for signed, global block coordinates
+        globalBlockCoord = new Vector3I(
+            chunkCoord.X * blocksPerChunk + localBlockCoord.X,
+            chunkCoord.Y * GameSettings.ChunkHeight + localBlockCoord.Y / renderScale,
+            chunkCoord.Z * blocksPerChunk + localBlockCoord.Z
+        );
     }
 
     public override void _PhysicsProcess(double delta) {

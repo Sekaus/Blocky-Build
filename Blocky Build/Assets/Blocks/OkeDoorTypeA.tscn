@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://c38r48gqsov3s"]
+[gd_scene load_steps=7 format=3 uid="uid://c38r48gqsov3s"]
 
-[ext_resource type="Script" uid="uid://1x1cyb4aybys" path="res://Assets/Scripts/SuperClasses/Door.cs" id="1_d7uxm"]
+[ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_by5nr"]
 [ext_resource type="ArrayMesh" uid="uid://d102dv24s3jr3" path="res://Assets/Blocks/Models/DoorTypeA.obj" id="1_gudjw"]
 [ext_resource type="Texture2D" uid="uid://bhiyroyphseft" path="res://Assets/Blocks/Textures/OkeDoorTypeA.png" id="2_prcc3"]
+[ext_resource type="Script" uid="uid://6bblpula8mye" path="res://Assets/Scripts/BlockBehaviorScripts/Door.cs" id="2_w4k3x"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5cv2h"]
 size = Vector3(1, 2.00098, 0.12677)
@@ -13,8 +14,8 @@ albedo_texture = ExtResource("2_prcc3")
 
 [node name="OkeDoorTypeA" type="StaticBody3D" groups=["block"]]
 transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 0, 0, 0)
-script = ExtResource("1_d7uxm")
-Type = 4
+script = ExtResource("1_by5nr")
+BehaviorScriptResource = ExtResource("2_w4k3x")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.500488, 0.000946045)

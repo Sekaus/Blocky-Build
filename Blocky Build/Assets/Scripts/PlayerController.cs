@@ -13,27 +13,25 @@ public partial class PlayerController : RigidBody3D {
 	public Inventory Hotbar = new Inventory(10, 1);
 	public Godot.Collections.Dictionary<int, Control> HotBarGUISlots = new Godot.Collections.Dictionary<int, Control>();
 	bool freezeScript = true;
-    public Vector3I? CorrentChunk = null;
+	public Vector3I? CorrentChunk = null;
 
-    public bool FreezeScript { 
+	public bool FreezeScript {
 		set {
 			AxisLockLinearY = value;
 			freezeScript = value;
 		}
-		get { 
-			return freezeScript; 
+		get {
+			return freezeScript;
 		}
 	}
 
-    Node3D leftHand;
+	Node3D leftHand;
 	Camera3D playerCamera;
 	RayCast3D playerRayCast;
 	Area3D groundArea;
 
 	Client client;
 	Control inventoryGUI;
-
-	WeakReference<CsgMesh3D> blockInFocusRef = new WeakReference<CsgMesh3D>(null);
 
 	// Add item and item display to inventory
 	public void AddItemToHotbar(Item item, int count = 1, int toSlot = -1) {
@@ -202,7 +200,7 @@ public partial class PlayerController : RigidBody3D {
 		AddItemToHotbar(Register.Blocks["GrassBlock"].Instantiate<Item>());
 		AddItemToHotbar(Register.Blocks["OkePlanks"].Instantiate<Item>());
 		AddItemToHotbar(Register.Blocks["OkeDoorTypeA"].Instantiate<Item>());
-        AddItemToHotbar(Register.Blocks["OkeRoof"].Instantiate<Item>());
+		AddItemToHotbar(Register.Blocks["OkeRoof"].Instantiate<Item>());
 		AddItemToHotbar(Register.Blocks["Stone"].Instantiate<Item>());
 		AddItemToHotbar(Register.Blocks["StoneStairs"].Instantiate<Item>());
 		AddItemToHotbar(Register.Blocks["StoneFence"].Instantiate<Item>());
@@ -264,27 +262,11 @@ public partial class PlayerController : RigidBody3D {
 		playerRotateY = 0f;
 	}
 
-	private void InteractionWithBlock(GodotObject collider, Vector3 collisionPoint) {
-
-		var hitPos = (Vector3)result["position"];
-
-		// Convert world position to block coordinates
-		var blockCoord = new Vector3I(
-			Mathf.FloorToInt(hitPos.X + 0.5f),
-			Mathf.FloorToInt(hitPos.Y + 0.5f),
-			Mathf.FloorToInt(hitPos.Z + 0.5f)
-		);
-
-		if (_blockData.TryGetValue(blockCoord, out var block)) {
-			block.OnClick();
-		}
-	}
-
 	public override void _Input(InputEvent inputEvent) {
 		if (freezeScript)
 			return;
 
-        if (inputEvent is InputEventMouseMotion mouseMotion) {
+		if (inputEvent is InputEventMouseMotion mouseMotion) {
 			// Rotate player and player camera
 			playerRotateX = Mathf.DegToRad(-mouseMotion.Relative.Y);
 			playerRotateY = Mathf.DegToRad(-mouseMotion.Relative.X);
@@ -292,59 +274,23 @@ public partial class PlayerController : RigidBody3D {
 
 		// RayCast Hit
 		if (playerRayCast.CollideWithBodies) {
-			playerRayCast.GetCollisionPoint
 			var collider = playerRayCast.GetCollider();
 			if (collider is Node node) {
-                foreach (string group in node.GetGroups()) {
-					if (group == "block") {
-						Block block = (Block)node;
-
-						// Safely load the material
-						Material edgeHighlight = (Material)GD.Load("res://Assets/Shaders/EdgeHighlight.tres");
-						if (edgeHighlight == null) {
-							GD.PrintErr("Failed to load material");
-							return;
-						}
-
-						// Get the CsgMesh3D node from the block
-						var blockMesh = block.GetNode<CsgMesh3D>("Mesh");
-
-						if (!IsInstanceValid(blockMesh)) {
-							GD.PrintErr("CsgMesh3D node is not valid");
-							return;
-						}
-
-						// Apply highlight
-						if (blockInFocusRef.TryGetTarget(out var blockInFocus) && IsInstanceValid(blockInFocus)) {
-							// Remove previous highlight if exists
-							if (blockInFocus.Material?.NextPass != null)
-								blockInFocus.Material.NextPass = null;
-
-							// Set new highlight
-							blockInFocusRef.SetTarget(blockMesh);
-
-							if (blockMesh.Material != null)
-								blockMesh.Material.NextPass = edgeHighlight;
-						}
-						else {
-							// Set new highlight if blockInFocus was null
-							blockInFocusRef.SetTarget(blockMesh);
-							if (blockMesh.Material != null)
-								blockMesh.Material.NextPass = edgeHighlight;
-						}
-
-						// Perform actions based on input
-
-						if (Input.IsActionJustPressed("hit_and_remove")) {
-							if (block.BlockName != "Bedrock") {
-								client.RemoveBlock(Mathf.RoundToInt(block.Position.X), Mathf.RoundToInt(block.Position.Y), Mathf.RoundToInt(block.Position.Z));
-								blockInFocusRef.SetTarget(null);
-							}
+				foreach (string group in node.GetGroups()) {
+					if (group == "chunk" && client.InteractionWithBlock(collider, playerRayCast.GetCollisionPoint(), out var blockBehavior, out var blockPosition)) {
+                        // Perform actions based on input
+                        blockBehavior.OnClick();
+                        if (Input.IsActionJustPressed("hit_and_remove")) {
+							/*if (block.BlockName != "Bedrock") {
+								//client.RemoveBlock(blockPosition);
+							}*/
 						}
 						else if (Input.IsActionJustPressed("integrate_and_place")) {
-							if (GetItemInLeftHand() != "") {
+							if (Input.IsActionJustPressed("sneek"))
+								blockBehavior.OnClick();
+							else if (GetItemInLeftHand() != "") {
 								Vector3 normal = playerRayCast.GetCollisionNormal();
-								Vector3 newBlockPose = block.Position + normal;
+								Vector3 newBlockPose = blockPosition + normal;
 
 								Block newBlock = Register.Blocks[GetItemInLeftHand()]?.Instantiate<Block>();
 
@@ -360,26 +306,19 @@ public partial class PlayerController : RigidBody3D {
 										rotation.Y = 0;
 								}
 
-								if (block.BlockName != "Grass")
+								/*if (block.BlockName != "Grass")
 									client.SetBlock(newBlock, Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y), Mathf.RoundToInt(newBlockPose.Z), true, rotation);
 								else {
 									if (GetItemInLeftHand() != "") {
 										client.RemoveBlock(Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y - 1), Mathf.RoundToInt(newBlockPose.Z));
 										client.SetBlock(newBlock, Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y - 1), Mathf.RoundToInt(newBlockPose.Z), true, rotation);
 									}
-								}
+								}*/
 							}
-							else if (block is Door)
-								block.OnClick();
+							/*else if (block is Door)
+								block.BehaviorInstance.OnClick();*/
 						}
 					}
-				}
-			}
-			else {
-				if (blockInFocusRef.TryGetTarget(out var blockInFocus) && IsInstanceValid(blockInFocus)) {
-					// Remove previous highlight if exists
-					if (blockInFocus.Material?.NextPass != null)
-						blockInFocus.Material.NextPass = null;
 				}
 			}
 		}

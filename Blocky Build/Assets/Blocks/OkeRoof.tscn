@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://dbk6hk8s0m5sv"]
+[gd_scene load_steps=7 format=3 uid="uid://dbk6hk8s0m5sv"]
 
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_0a3do"]
 [ext_resource type="ArrayMesh" uid="uid://dlryyov62cyf6" path="res://Assets/Blocks/Models/Roof.obj" id="2_2vsmo"]
+[ext_resource type="Script" uid="uid://iogv5dao5ogo" path="res://Assets/Scripts/BlockBehaviorScripts/Default.cs" id="2_ibgmj"]
 [ext_resource type="Texture2D" uid="uid://c0kbsxjfja8qu" path="res://Assets/Blocks/Textures/OkePlanks.png" id="3_wv7e0"]
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_yvemp"]
@@ -14,7 +15,7 @@ albedo_texture = ExtResource("3_wv7e0")
 [node name="OkeRoof" type="StaticBody3D" groups=["block"]]
 script = ExtResource("1_0a3do")
 Type = 2
-canBeConnected = false
+BehaviorScript = ExtResource("2_ibgmj")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("ConvexPolygonShape3D_yvemp")

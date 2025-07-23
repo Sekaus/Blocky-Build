@@ -1,6 +1,6 @@
 [gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://bek3yluvlwyc8"]
 
-[ext_resource type="Shader" path="res://Assets/Shaders/EdgeHighlight.gdshader" id="1_ruv1j"]
+[ext_resource type="Shader" uid="uid://b1yurxqgble1m" path="res://Assets/Shaders/EdgeHighlight.gdshader" id="1_ruv1j"]
 
 [resource]
 render_priority = 0
