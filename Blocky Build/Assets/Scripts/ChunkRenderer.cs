@@ -180,6 +180,7 @@ public partial class ChunkRenderer : Node3D {
         var shapeNode = new CollisionShape3D { Shape = new ConcavePolygonShape3D { Data = tris } };
         body.Transform = new Transform3D(Basis.Identity, origin);
         body.AddChild(shapeNode);
+        body.AddToGroup("chunk");
         AddChild(body);
         _collisionBodies[chunkPos] = body;
     }

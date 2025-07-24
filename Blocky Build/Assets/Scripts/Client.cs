@@ -52,31 +52,6 @@ public partial class Client : Node {
 
         // 2) Enqueue for rebuild
         _chunksToRebuild.Enqueue(chunkPos);
-        foreach (var dir in _directionsAtBorder(blockPosition, chunkPos))
-            _chunksToRebuild.Enqueue(chunkPos + dir);
-    }
-
-    // Only enqueue neighbor chunks when the block is on that chunk’s border
-    private IEnumerable<Vector3I> _directionsAtBorder(Vector3I globalPos, Vector3I chunkPos) {
-        int cSize = GameSettings.ChunkRadius * 2;
-        // compute local in‐chunk coordinates
-        var local = new Vector3I(
-            globalPos.X - chunkPos.X * cSize,
-            globalPos.Y - chunkPos.Y * GameSettings.ChunkHeight,
-            globalPos.Z - chunkPos.Z * cSize
-        );
-        if (local.X == 0)
-            yield return new Vector3I(-1, 0, 0);
-        if (local.X == cSize-1)
-            yield return new Vector3I(1, 0, 0);
-        if (local.Y == 0)
-            yield return new Vector3I(0, -1, 0);
-        if (local.Y == GameSettings.ChunkHeight-1)
-            yield return new Vector3I(0, 1, 0);
-        if (local.Z == 0)
-            yield return new Vector3I(0, 0, -1);
-        if (local.Z == cSize-1)
-            yield return new Vector3I(0, 0, 1);
     }
 
     public override void _PhysicsProcess(double delta) {
