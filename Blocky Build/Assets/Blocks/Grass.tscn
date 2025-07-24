@@ -1,26 +1,17 @@
-[gd_scene load_steps=6 format=3 uid="uid://djlntbdlpgs3u"]
+[gd_scene load_steps=5 format=3 uid="uid://djlntbdlpgs3u"]
 
 [ext_resource type="ArrayMesh" uid="uid://uru58n8kf7lc" path="res://Assets/Blocks/Models/Grass.obj" id="1_1krae"]
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_ar1l1"]
-[ext_resource type="Texture2D" uid="uid://dnq528sonc1op" path="res://Assets/Blocks/GrassBlock.png" id="3_2md05"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_bvpwi"]
-size = Vector3(1, 0.0620728, 1)
+[ext_resource type="Texture2D" uid="uid://dnq528sonc1op" path="res://Assets/Blocks/Textures/GrassBlock.png" id="3_2md05"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q53pr"]
 resource_local_to_scene = true
 albedo_texture = ExtResource("3_2md05")
 
-[node name="Grass" type="StaticBody3D" groups=["block"]]
+[node name="Grass" type="Node3D" groups=["block"]]
 script = ExtResource("1_ar1l1")
 Tags = PackedStringArray("grass")
-canBeConnected = false
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.46809, 0)
-shape = SubResource("BoxShape3D_bvpwi")
 
 [node name="Mesh" type="CSGMesh3D" parent="."]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 mesh = ExtResource("1_1krae")
 material = SubResource("StandardMaterial3D_q53pr")

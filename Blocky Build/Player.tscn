@@ -54,7 +54,7 @@ layout_mode = 2
 
 [node name="LeftHand" type="Node3D" parent="."]
 unique_name_in_owner = true
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, -0.5, 0, -0.3)
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, -0.5, 0, -0.3)
 
 [node name="GroundArea" type="Area3D" parent="."]
 unique_name_in_owner = true

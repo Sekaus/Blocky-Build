@@ -1,48 +1,17 @@
-[gd_scene load_steps=10 format=3 uid="uid://ofxdh63ulydy"]
+[gd_scene load_steps=5 format=3 uid="uid://ofxdh63ulydy"]
 
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_23lbd"]
-[ext_resource type="Script" uid="uid://iogv5dao5ogo" path="res://Assets/Scripts/BlockBehaviorScripts/Default.cs" id="2_hj5pa"]
 [ext_resource type="ArrayMesh" uid="uid://bhnsk3sa2ai57" path="res://Assets/Blocks/Models/Stairs.obj" id="2_x4rdr"]
 [ext_resource type="Texture2D" uid="uid://5l6wi68vvt5g" path="res://Assets/Blocks/Textures/Stone.png" id="3_fvlw6"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_pjb2f"]
-size = Vector3(1, 0.25116, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_repjv"]
-size = Vector3(0.748901, 0.499512, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_4rcmh"]
-size = Vector3(0.498047, 0.75, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_3jwvg"]
-size = Vector3(0.251465, 1, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hakhs"]
 resource_local_to_scene = true
 albedo_texture = ExtResource("3_fvlw6")
 
-[node name="StoneStairs" type="StaticBody3D" groups=["block"]]
+[node name="StoneStairs" type="Node3D" groups=["block"]]
 script = ExtResource("1_23lbd")
 Type = 3
-BehaviorScript = ExtResource("2_hj5pa")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.37442, 0)
-shape = SubResource("BoxShape3D_pjb2f")
-
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.125549, -0.250244, 0)
-shape = SubResource("BoxShape3D_repjv")
-
-[node name="CollisionShape3D3" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.250977, -0.125, 0)
-shape = SubResource("BoxShape3D_4rcmh")
-
-[node name="CollisionShape3D4" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.374268, 0, 0)
-shape = SubResource("BoxShape3D_3jwvg")
 
 [node name="Mesh" type="CSGMesh3D" parent="."]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 mesh = ExtResource("2_x4rdr")
 material = SubResource("StandardMaterial3D_hakhs")

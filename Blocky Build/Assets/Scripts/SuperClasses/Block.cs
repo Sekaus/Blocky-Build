@@ -24,6 +24,9 @@ public partial class Block : Node3D {
     [Export]
     public bool Unbreakable = false;
 
+    [Export]
+    public bool BlocksCanBePlacedOn = true;
+
     public FacingDirections FacingDirection = FacingDirections.Forward;
     public bool UpsideDown = false;
 

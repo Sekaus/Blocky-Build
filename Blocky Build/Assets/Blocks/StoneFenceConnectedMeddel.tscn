@@ -1,26 +1,17 @@
-[gd_scene load_steps=7 format=3 uid="uid://dhlxset11rb7q"]
+[gd_scene load_steps=5 format=3 uid="uid://dhlxset11rb7q"]
 
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_4mdsk"]
 [ext_resource type="ArrayMesh" uid="uid://dr02bnrvjfmqw" path="res://Assets/Blocks/Models/FenceConnectedMeddel.obj" id="2_n8133"]
-[ext_resource type="Script" uid="uid://iogv5dao5ogo" path="res://Assets/Scripts/BlockBehaviorScripts/Default.cs" id="2_ofdbr"]
 [ext_resource type="Texture2D" uid="uid://5l6wi68vvt5g" path="res://Assets/Blocks/Textures/Stone.png" id="3_btjyy"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_xyns4"]
-size = Vector3(1, 0.752197, 0.247314)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qsm23"]
 resource_local_to_scene = true
 albedo_texture = ExtResource("3_btjyy")
 
-[node name="StoneFenceConnectedMeddel" type="StaticBody3D" groups=["block"]]
+[node name="StoneFenceConnectedMeddel" type="Node3D" groups=["block"]]
 script = ExtResource("1_4mdsk")
 Type = 1
 VariationOfBlock = "StoneFence"
-BehaviorScript = ExtResource("2_ofdbr")
-
-[node name="CollisionShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00167847, -0.126221, -0.000610352)
-shape = SubResource("BoxShape3D_xyns4")
 
 [node name="Mesh" type="CSGMesh3D" parent="."]
 mesh = ExtResource("2_n8133")

@@ -1,24 +1,18 @@
-[gd_scene load_steps=6 format=3 uid="uid://c8lc0wo6ypk2h"]
+[gd_scene load_steps=5 format=3 uid="uid://5s7od45fec6l"]
 
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_iyfe4"]
 [ext_resource type="ArrayMesh" uid="uid://dqdipxfudh3db" path="res://Assets/Blocks/Models/Block.obj" id="2_qx6aw"]
 [ext_resource type="Texture2D" uid="uid://dnq528sonc1op" path="res://Assets/Blocks/Textures/GrassBlock.png" id="3_7a6q6"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_k5a6j"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cwdaw"]
 resource_local_to_scene = true
 albedo_texture = ExtResource("3_7a6q6")
 texture_filter = 2
 
-[node name="GrassBlock" type="StaticBody3D" groups=["block"]]
+[node name="GrassBlock" type="Node3D" groups=["block"]]
 script = ExtResource("1_iyfe4")
 Tags = PackedStringArray("grassBlock")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-shape = SubResource("BoxShape3D_k5a6j")
-
 [node name="Mesh" type="CSGMesh3D" parent="."]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 mesh = ExtResource("2_qx6aw")
 material = SubResource("StandardMaterial3D_cwdaw")

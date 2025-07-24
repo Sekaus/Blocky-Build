@@ -278,24 +278,24 @@ public partial class PlayerController : RigidBody3D {
 			if (collider is Node node) {
 				foreach (string group in node.GetGroups()) {
 					if (group == "chunk" && client.InteractionWithBlock(collider, playerRayCast.GetCollisionPoint(), out var blockBehavior, out var blockPosition)) {
-                        // Perform actions based on input
-                        blockBehavior.OnClick();
-                        if (Input.IsActionJustPressed("hit_and_remove")) {
-							/*if (block.BlockName != "Bedrock") {
-								//client.RemoveBlock(blockPosition);
-							}*/
+						// Perform actions based on input
+						if (Input.IsActionJustPressed("hit_and_remove")) {
+							client.RemoveBlock(blockPosition);
+							//blockBehavior.OnRemove();
 						}
 						else if (Input.IsActionJustPressed("integrate_and_place")) {
-							if (Input.IsActionJustPressed("sneek"))
-								blockBehavior.OnClick();
-							else if (GetItemInLeftHand() != "") {
+							if (GetItemInLeftHand() != "" && !Input.IsActionPressed("sneek")) {
 								Vector3 normal = playerRayCast.GetCollisionNormal();
-								Vector3 newBlockPose = blockPosition + normal;
+								Vector3I newBlockPose = new Vector3I(
+									Mathf.RoundToInt(blockPosition.X + normal.X), 
+									Mathf.RoundToInt(blockPosition.Y + normal.Y),
+                                    Mathf.RoundToInt(blockPosition.Z + normal.Z)
+                                    );
 
-								Block newBlock = Register.Blocks[GetItemInLeftHand()]?.Instantiate<Block>();
+                                BlockData newBlock = Register.BlockDataMap[GetItemInLeftHand()];
 
 								// Rotate the new block if it use rotation
-								Vector3 rotation;
+								/*Vector3 rotation;
 								if (newBlock.Type != Block.BlockType.Roof && newBlock.Type != Block.BlockType.Stairs && newBlock.Type != Block.BlockType.Door)
 									rotation = Vector3.Zero;
 								else {
@@ -304,20 +304,13 @@ public partial class PlayerController : RigidBody3D {
 										rotation.Y = Mathf.Clamp(-playerCamera.Basis.Z.Y, 0, 1);
 									else
 										rotation.Y = 0;
-								}
-
-								/*if (block.BlockName != "Grass")
-									client.SetBlock(newBlock, Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y), Mathf.RoundToInt(newBlockPose.Z), true, rotation);
-								else {
-									if (GetItemInLeftHand() != "") {
-										client.RemoveBlock(Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y - 1), Mathf.RoundToInt(newBlockPose.Z));
-										client.SetBlock(newBlock, Mathf.RoundToInt(newBlockPose.X), Mathf.RoundToInt(newBlockPose.Y - 1), Mathf.RoundToInt(newBlockPose.Z), true, rotation);
-									}
 								}*/
+
+								client.SetBlock(newBlock, newBlockPose);
 							}
-							/*else if (block is Door)
-								block.BehaviorInstance.OnClick();*/
-						}
+							else
+                                blockBehavior.OnClick();
+                        }
 					}
 				}
 			}

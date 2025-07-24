@@ -43,7 +43,7 @@ public partial class WorldData : Node {
         };
     }
 
-    public async Task GenChunk(Vector3I chunkPosition) {
+    public async Task GenChunkAsync(Vector3I chunkPosition) {
         var chunk = new Chunk(chunkPosition, this, worldTypeLayers);
         genChunks[chunkPosition] = chunk;
         await chunk.DataReady;

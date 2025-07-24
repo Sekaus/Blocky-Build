@@ -1,6 +1,5 @@
 public class GameSettings {
     public const int maxCunksOnSceen = 64;
-    public const float BlockSize = 0.5f;
 
     public static int MaxCunksOnSceen {
         get {
@@ -22,7 +21,7 @@ public class GameSettings {
 
     public static float ChunkSize {
         get {
-            return ChunkRadius * BlockSize * BlockRenderScale;
+            return ChunkRadius * BlockRenderScale;
         }
     }
 

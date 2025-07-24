@@ -1,4 +1,4 @@
-using Godot;
+﻿using Godot;
 using Godot.Collections;
 using System;
 using System.Collections.Concurrent;
@@ -47,6 +47,18 @@ public class Chunk {
         }
 
         _dataReady.TrySetResult(true);
+    }
+
+    public void AddBlock(Vector3I blockPosition, BlockData blockData) {
+        _rawBlocks.Add(blockPosition, blockData);
+    }
+
+    public void RemoveBlock(Vector3I blockPosition) { 
+        _rawBlocks.Remove(blockPosition); 
+    }
+
+    public bool hashBlockAt(Vector3I blockPosition) {
+        return _rawBlocks.ContainsKey(blockPosition);
     }
 
     /*public void CullChunk() {

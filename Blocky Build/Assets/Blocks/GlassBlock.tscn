@@ -1,23 +1,18 @@
-[gd_scene load_steps=6 format=3 uid="uid://dqmnqolh5cf38"]
+[gd_scene load_steps=5 format=3 uid="uid://dqmnqolh5cf38"]
 
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_swrg8"]
-[ext_resource type="ArrayMesh" uid="uid://dqdipxfudh3db" path="res://Assets/Blocks/Models/Block.obj" id="2_g2ldi"]
-[ext_resource type="Texture2D" uid="uid://dnq528sonc1op" path="res://Assets/Blocks/Textures/GrassBlock.png" id="3_xffy8"]
+[ext_resource type="ArrayMesh" uid="uid://c7ndri83186av" path="res://Assets/Blocks/Models/BlockSingleTexture.obj" id="2_g2ldi"]
+[ext_resource type="Texture2D" uid="uid://c24t83ulbfayn" path="res://Assets/Blocks/Textures/Glass.png" id="3_xffy8"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_itk8u"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_g2ldi"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k2hwb"]
+transparency = 1
 albedo_texture = ExtResource("3_xffy8")
 texture_filter = 2
 
-[node name="GlassBlock" type="StaticBody3D" groups=["block"]]
+[node name="GlassBlock" type="Node3D" groups=["block"]]
 script = ExtResource("1_swrg8")
 Tags = PackedStringArray("glass")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-shape = SubResource("BoxShape3D_itk8u")
-
 [node name="Mesh" type="CSGMesh3D" parent="."]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 mesh = ExtResource("2_g2ldi")
-material = SubResource("StandardMaterial3D_g2ldi")
+material = SubResource("StandardMaterial3D_k2hwb")

@@ -1,42 +1,18 @@
-[gd_scene load_steps=9 format=3 uid="uid://vehufngtox1k"]
+[gd_scene load_steps=5 format=3 uid="uid://vehufngtox1k"]
 
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_fi3im"]
-[ext_resource type="Script" uid="uid://iogv5dao5ogo" path="res://Assets/Scripts/BlockBehaviorScripts/Default.cs" id="2_bionm"]
 [ext_resource type="ArrayMesh" uid="uid://bof45laviwacr" path="res://Assets/Blocks/Models/FenceConnectedD.obj" id="2_y21dj"]
 [ext_resource type="Texture2D" uid="uid://5l6wi68vvt5g" path="res://Assets/Blocks/Textures/Stone.png" id="3_dand4"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_jcxuy"]
-size = Vector3(0.500488, 1, 0.495544)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_7ts8l"]
-size = Vector3(0.79428, 0.750946, 0.249756)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_mkhlc"]
-size = Vector3(0.251526, 0.750916, 0.740614)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2ee41"]
 resource_local_to_scene = true
 albedo_texture = ExtResource("3_dand4")
 
-[node name="StoneFenceConnectedD" type="StaticBody3D" groups=["block"]]
+[node name="StoneFenceConnectedD" type="Node3D" groups=["block"]]
 script = ExtResource("1_fi3im")
 Type = 1
 VariationOfBlock = "StoneFence"
-BehaviorScript = ExtResource("2_bionm")
-
-[node name="CollisionShape1" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00199699, 0, 0.00112915)
-shape = SubResource("BoxShape3D_jcxuy")
-
-[node name="CollisionShape2" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.10261, -0.124527, -0.000610352)
-shape = SubResource("BoxShape3D_7ts8l")
-
-[node name="CollisionShape3" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00441635, -0.125791, 0.126125)
-shape = SubResource("BoxShape3D_mkhlc")
 
 [node name="Mesh" type="CSGMesh3D" parent="."]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 mesh = ExtResource("2_y21dj")
 material = SubResource("StandardMaterial3D_2ee41")

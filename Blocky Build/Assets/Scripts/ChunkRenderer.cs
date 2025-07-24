@@ -1,7 +1,9 @@
 ﻿using Godot;
 using Godot.Collections;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 
 public partial class ChunkRenderer : Node3D {
     private System.Collections.Generic.Dictionary<Vector3I, MeshInstance3D> _chunkInstances = new();
@@ -139,5 +141,46 @@ public partial class ChunkRenderer : Node3D {
         }
 
         return tris.ToArray();
+    }
+
+    // A thread-safe queue of rebuild requests
+    private readonly ConcurrentQueue<(Vector3I chunkPos, System.Collections.Generic.Dictionary<Vector3I, BlockData> blocks)> _rebuildQueue = new ConcurrentQueue<(Vector3I, System.Collections.Generic.Dictionary<Vector3I, BlockData>)>();
+
+    public void RequestChunkRebuild(Vector3I chunkPos, System.Collections.Generic.Dictionary<Vector3I, BlockData> blocks) {
+        // Enqueue the data (light) and kick off a background mesh gen
+        _rebuildQueue.Enqueue((chunkPos, blocks));
+
+        ThreadPool.QueueUserWorkItem(_ => {
+            if (_rebuildQueue.TryDequeue(out var job)) {
+                // 1) Build the mesh off the main thread
+                var mesh = BuildCombinedMesh(job.blocks, job.chunkPos * GameSettings.BlockRenderScale);
+                var tris = ExtractTriangles(mesh);
+
+                // 2) Enqueue the final scene update back on the main thread
+                MainThreadDispatcher.Enqueue(() => {
+                    ApplyChunkMeshAndCollision(job.chunkPos, mesh, tris);
+                });
+            }
+        });
+    }
+
+    private void ApplyChunkMeshAndCollision(Vector3I chunkPos, ArrayMesh mesh, Vector3[] tris) {
+        // Remove old
+        if (_chunkInstances.TryGetValue(chunkPos, out var old)) { old.QueueFree(); _chunkInstances.Remove(chunkPos); }
+        if (_collisionBodies.TryGetValue(chunkPos, out var oldBody)) { oldBody.QueueFree(); _collisionBodies.Remove(chunkPos); }
+
+        // Add new mesh instance
+        var origin = chunkPos * GameSettings.BlockRenderScale;
+        var mi = new MeshInstance3D { Mesh = mesh, Transform = new Transform3D(Basis.Identity, origin) };
+        AddChild(mi);
+        _chunkInstances[chunkPos] = mi;
+
+        // Add collision shape
+        var body = new StaticBody3D();
+        var shapeNode = new CollisionShape3D { Shape = new ConcavePolygonShape3D { Data = tris } };
+        body.Transform = new Transform3D(Basis.Identity, origin);
+        body.AddChild(shapeNode);
+        AddChild(body);
+        _collisionBodies[chunkPos] = body;
     }
 }

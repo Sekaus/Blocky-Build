@@ -1,4 +1,4 @@
-using Godot;
+﻿using Godot;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -11,7 +11,6 @@ public partial class Client : Node {
     WorldData worldData;
     ChunkRenderer chunkRenderer;
     Node3D blockHighlight;
-
     public WorldData WorldData {
         get { 
             return worldData; 
@@ -20,30 +19,73 @@ public partial class Client : Node {
 
     PlayerController player;
 
-    // Set block in world at xyz
-    public void SetBlock(Block newBlock, int x, int y, int z, bool runBlockUpdates = true, Vector3 rotation = new Vector3()) {
-        /*if (!IsThereABlockAt(x, y, z)) {
-            if (newBlock != null) {
-                newBlock.BlockName = newBlock.Name;
+    // thread‐safe queue of chunk rebuild jobs
+    private readonly ConcurrentQueue<Vector3I> _chunksToRebuild = new();
 
-                newBlock = RotateBlock(newBlock, rotation);
-            }
+    // Set block in world
+    public void SetBlock(BlockData blockData, Vector3I blockPosition, bool runBlockUpdates = true, Vector3 rotation = new Vector3()) {
+        var chunkPos = GetRelativeChunkPosition(blockPosition);
+        if (!worldData.GetChunk(chunkPos).Item1)
+            return;
 
-            if (runBlockUpdates)
-                newBlock = UpdateBlock(x, y, z, newBlock);
+        var chunk = worldData.GetChunk(chunkPos).Item2;
+        // Overwrite or add
+        chunk.Blocks[blockPosition] = blockData;
 
-            newBlock.Position = new Vector3I(x, y, z);
+        // Rebuild this chunk...
+        chunkRenderer.RequestChunkRebuild(chunkPos, chunk.Blocks);
+    }
 
-            newBlock.Name = "block_" + x + "_" + y + "_" + z;
+    // Remove block in world
+    public void RemoveBlock(Vector3I blockPosition, bool runBlockUpdates = true) {
+        var chunkPos = GetRelativeChunkPosition(blockPosition);
+        var chunkRes = worldData.GetChunk(chunkPos);
+        if (!chunkRes.Item1)
+            return;
+        var chunk = chunkRes.Item2;
 
-            //map.AddChild(newBlock);
+        if (!chunk.Blocks.ContainsKey(blockPosition))
+            return;
 
-            if (runBlockUpdates) {
-                Godot.Collections.Dictionary<string, Block> blocksToUpdate = CollectConnnectedBlocks(x, y, z);
+        // 1) Modify data
+        chunk.RemoveBlock(blockPosition);
 
-                UpdateBlocks(blocksToUpdate);
-            }
-        }*/
+        // 2) Enqueue for rebuild
+        _chunksToRebuild.Enqueue(chunkPos);
+        foreach (var dir in _directionsAtBorder(blockPosition, chunkPos))
+            _chunksToRebuild.Enqueue(chunkPos + dir);
+    }
+
+    // Only enqueue neighbor chunks when the block is on that chunk’s border
+    private IEnumerable<Vector3I> _directionsAtBorder(Vector3I globalPos, Vector3I chunkPos) {
+        int cSize = GameSettings.ChunkRadius * 2;
+        // compute local in‐chunk coordinates
+        var local = new Vector3I(
+            globalPos.X - chunkPos.X * cSize,
+            globalPos.Y - chunkPos.Y * GameSettings.ChunkHeight,
+            globalPos.Z - chunkPos.Z * cSize
+        );
+        if (local.X == 0)
+            yield return new Vector3I(-1, 0, 0);
+        if (local.X == cSize-1)
+            yield return new Vector3I(1, 0, 0);
+        if (local.Y == 0)
+            yield return new Vector3I(0, -1, 0);
+        if (local.Y == GameSettings.ChunkHeight-1)
+            yield return new Vector3I(0, 1, 0);
+        if (local.Z == 0)
+            yield return new Vector3I(0, 0, -1);
+        if (local.Z == cSize-1)
+            yield return new Vector3I(0, 0, 1);
+    }
+
+    public override void _PhysicsProcess(double delta) {
+        // Process one rebuild per frame (tune as needed)
+        if (_chunksToRebuild.TryDequeue(out var chunkPos)) {
+            var chunk = worldData.GetChunk(chunkPos);
+            if (chunk.Item1)
+                chunkRenderer.BuildChunkMesh(chunkPos, chunk.Item2.Blocks);
+        }
     }
 
     // Rotate a block at xyz (hole turns)
@@ -89,24 +131,6 @@ public partial class Client : Node {
             block.UpsideDown = true;
 
         return block;
-    }
-
-
-    // Remove block in world at xyz
-    public void RemoveBlock(int x, int y, int z, bool runBlockUpdates = true) {
-        /*if (IsThereABlockAt(x, y, z)) {
-            string blockName = "block_" + x + "_" + y + "_" + z;
-            Block block = getBlockAsObject(x, y, z);
-
-            //map.RemoveChild(block);
-            block.QueueFree();
-
-            if (runBlockUpdates) {
-                Godot.Collections.Dictionary<string, Block> blocksToUpdate = CollectConnnectedBlocks(x, y, z);
-
-                UpdateBlocks(blocksToUpdate);
-            }
-        }*/
     }
 
     // Run at block single update
@@ -315,20 +339,16 @@ public partial class Client : Node {
         return blockThatExecute;
     }
 
-    // Test if there is a block at xyz
-    /*public bool IsThereABlockAt(int x, int y, int z) {
-        string blockName = "block_" + x + "_" + y + "_" + z;
-        return map.GetNodeOrNull(blockName) is not null;
-    }
+    // Test if there is a block at position
+    public bool IsThereABlockAt(Vector3I blockPosition, Vector3I chunkPosition) {
+        var chunk = worldData.GetChunk(chunkPosition);
+        if (chunk.Item1) {
+            if (chunk.Item2.Blocks.ContainsKey(blockPosition))
+                return true;
+        }
 
-    // Get block as object at xyz
-    public Block getBlockAsObject(int x, int y, int z) {
-        string blockName = "block_" + x + "_" + y + "_" + z;
-        if(IsThereABlockAt(x, y, z))
-            return map.GetNode<Block>(blockName);
-        else
-            return new Block(true);
-    }*/
+        return false;
+    }
 
     public override void _Ready() {
         player = GetNode<PlayerController>("%Player");
@@ -373,22 +393,23 @@ public partial class Client : Node {
     }
 
     private async Task InitializeAsync(Vector3I selectedChunk) {
-        await worldData.GenChunk(selectedChunk);
-
-        RendererChunk(selectedChunk);
+        await worldData.GenChunkAsync(selectedChunk);
+        var chunk = worldData.GetChunk(selectedChunk);
+        if (chunk.Item1)
+            chunkRenderer.BuildChunkMesh(selectedChunk, chunk.Item2.Blocks);
     }
 
-    private void RendererChunk(Vector3I selectedChunk) {
+    private void RequestChunkRebuild(Vector3I selectedChunk) {
         var chunk = worldData.GetChunk(selectedChunk);
         
         if(chunk.Item1)
-            chunkRenderer.BuildChunkMesh(selectedChunk, chunk.Item2.Blocks);
+            chunkRenderer.RequestChunkRebuild(selectedChunk, chunk.Item2.Blocks);
     }
 
     private void RendererChunks() {
         Vector3I[] chunkPositions = worldData.GetChunkPositions();
         foreach(var chunkPosition in chunkPositions)
-            RendererChunk(chunkPosition);
+            RequestChunkRebuild(chunkPosition);
     }
 
     private async Task GenChunks(Vector3I chunkPosition) {
@@ -409,7 +430,7 @@ public partial class Client : Node {
             await semaphore.WaitAsync();
             var task = Task.Run(async () => {
                 try {
-                    await worldData.GenChunk(_chunkPosition);
+                    await worldData.GenChunkAsync(_chunkPosition);
                 }
                 finally {
                     semaphore.Release();
@@ -426,87 +447,107 @@ public partial class Client : Node {
         RendererChunks();
     }
 
-    public bool InteractionWithBlock(GodotObject collider, Vector3 collisionPoint, out BlockBehavior blockBehavior, out Vector3I blockPosition) {
-        GetChunkAndLocalBlockCoord(collisionPoint, out var chunkCoord, out var localBlockCoord, out var globalBlockCoord);
+    public bool InteractionWithBlock(
+    GodotObject collider,
+    Vector3 collisionPoint,
+    out BlockBehavior blockBehavior,
+    out Vector3I blockPosition
+) {
+        // 1) Compute all coords in block‐space
+        GetBlockCoords(collisionPoint, out var chunkCoord, out var localBlockCoord, out var globalBlockCoord);
 
-        var chunk = worldData.GetChunk(chunkCoord);
-
-        if (chunk.Item1) {
-            if (chunk.Item2.Blocks.TryGetValue(globalBlockCoord, out var blockData)) {
-                // Apply highlight
-                blockHighlight.Visible = true;
-                blockHighlight.Position = globalBlockCoord * GameSettings.BlockRenderScale;
-
-                CSharpScript scriptToUse = blockData.BehaviorScript ?? Register.DefaultBlockBehaviorScript;
-
-                var beh = scriptToUse.New().As<BlockBehavior>();
-                if (beh != null) {
-                    var worldBlockSize = GameSettings.BlockSize * GameSettings.BlockRenderScale;
-                    var worldPos = new Vector3(globalBlockCoord.X, globalBlockCoord.Y, globalBlockCoord.Z) * worldBlockSize;
-                    beh.Setup(
-                        worldData,
-                        new Transform3D(Basis.Identity, globalBlockCoord),
-                        chunk.Item2
-                    );
-                    blockBehavior = beh;
-                    blockPosition = globalBlockCoord;
-                    return true;
-                }
-                else {
-                    GD.PrintErr("Failed to create behavior for block at ", globalBlockCoord);
-                }
-            }
+        // 2) Try get chunk + block
+        var (exists, chunk) = worldData.GetChunk(chunkCoord);
+        if (!exists || !chunk.Blocks.ContainsKey(globalBlockCoord)) {
+            blockBehavior = null;
+            blockPosition  = Vector3I.Zero;
+            blockHighlight.Visible = false;
+            return false;
         }
-        // Remove highlight
-        blockHighlight.Visible = false;
-        blockBehavior = null;
-        blockPosition = Vector3I.Zero;
-        return false;
+
+        // 3) Highlight at exactly the block’s world position
+        var worldPos = globalBlockCoord * GameSettings.BlockRenderScale;
+        blockHighlight.Visible  = true;
+        blockHighlight.Position = worldPos;
+
+        // 4) Create behavior and setup
+        var script = chunk.Blocks[globalBlockCoord].BehaviorScript
+                     ?? Register.DefaultBlockBehaviorScript;
+        var beh = script.New().As<BlockBehavior>();
+        if (beh == null) {
+            GD.PrintErr($"No behavior at {globalBlockCoord}");
+            blockBehavior = null;
+            blockPosition  = globalBlockCoord;
+            return false;
+        }
+
+        beh.Setup(worldData, new Transform3D(Basis.Identity, worldPos), chunk);
+        blockBehavior = beh;
+        blockPosition  = globalBlockCoord;
+        return true;
     }
 
-    public static void GetChunkAndLocalBlockCoord(Vector3 worldPos, out Vector3I chunkCoord, out Vector3I localBlockCoord, out Vector3I globalBlockCoord) {
-        float baseBlockSize = GameSettings.BlockSize;
-        int renderScale = GameSettings.BlockRenderScale;
-        float worldBlockSize = baseBlockSize * renderScale;
+    /// <summary>
+    /// Converts a world‐space hit point into:
+    ///   * chunkCoord      — which chunk that block lives in,
+    ///   * localBlockCoord — [0..ChunkSize-1] index inside that chunk,
+    ///   * globalBlockCoord— the absolute block index in your world.
+    /// </summary>
+    public static void GetBlockCoords(
+        Vector3 worldPos,
+        out Vector3I chunkCoord,
+        out Vector3I localBlockCoord,
+        out Vector3I globalBlockCoord
+    ) {
+        // 1) Un‐scale into block‐space
+        float scale = GameSettings.BlockRenderScale;
+        Vector3 blockSpace = worldPos / scale;
 
-        // Number of blocks along one edge of a chunk
-        int blocksPerChunk = GameSettings.ChunkRadius * 2;
-
-        // World size of one chunk (in world units)
-        float chunkSizeWorld = blocksPerChunk * worldBlockSize;
-        float chunkHeightWorld = GameSettings.ChunkHeight * worldBlockSize;
-
-        // Which chunk?
-        chunkCoord = new Vector3I(
-            Mathf.FloorToInt(worldPos.X / chunkSizeWorld),
-            Mathf.FloorToInt(worldPos.Y / chunkHeightWorld),
-            Mathf.FloorToInt(worldPos.Z / chunkSizeWorld)
-        );
-
-        // Local block index within that chunk [0 .. blocksPerChunk-1]
-        Vector3 chunkOrigin = new Vector3(
-            chunkCoord.X * chunkSizeWorld,
-            chunkCoord.Y * chunkHeightWorld,
-            chunkCoord.Z * chunkSizeWorld
-        );
-
-        Vector3 localPos = (worldPos - chunkOrigin) / worldBlockSize;
-        localBlockCoord = new Vector3I(
-            Mathf.FloorToInt(localPos.X),
-            Mathf.FloorToInt(localPos.Y),
-            Mathf.FloorToInt(localPos.Z)
-        );
-
-        // Recombine for signed, global block coordinates
+        // 2) Floor to get the integer block index
         globalBlockCoord = new Vector3I(
-            chunkCoord.X * blocksPerChunk + localBlockCoord.X,
-            chunkCoord.Y * GameSettings.ChunkHeight + localBlockCoord.Y / renderScale,
-            chunkCoord.Z * blocksPerChunk + localBlockCoord.Z
+            Mathf.FloorToInt(blockSpace.X),
+            Mathf.FloorToInt(blockSpace.Y),
+            Mathf.FloorToInt(blockSpace.Z)
+        );
+
+        // 3) Compute chunk index via floored division
+        int cSize = GameSettings.ChunkRadius * 2;        // e.g. 16
+        int cHeight = GameSettings.ChunkHeight;
+
+        chunkCoord = new Vector3I(
+            Mathf.FloorToInt((float)globalBlockCoord.X / cSize),
+            Mathf.FloorToInt((float)globalBlockCoord.Y / cHeight),
+            Mathf.FloorToInt((float)globalBlockCoord.Z / cSize)
+        );
+
+        // 4) Local index = positive modulo inside chunk
+        localBlockCoord = new Vector3I(
+            Mod(globalBlockCoord.X, cSize),
+            Mod(globalBlockCoord.Y, cHeight),
+            Mod(globalBlockCoord.Z, cSize)
         );
     }
 
-    public override void _PhysicsProcess(double delta) {
-        
+    // C# % operator can go negative, so we fix it
+    private static int Mod(int a, int m) {
+        int r = a % m;
+        return r < 0 ? r + m : r;
+    }
+
+
+    /// <summary>
+    /// Converts a global block index (Vector3I) into its chunk coordinate.
+    /// </summary>
+    Vector3I GetRelativeChunkPosition(Vector3I blockPosition) {
+        int blocksPerChunk = GameSettings.ChunkRadius * 2;
+        int chunkHeight = GameSettings.ChunkHeight;
+
+        return new Vector3I(
+            // integer‐division floors toward zero for positives, which is what we want
+            blockPosition.X / blocksPerChunk,
+            blockPosition.Y / chunkHeight,
+            blockPosition.Z / blocksPerChunk
+        );
     }
 
     public override void _Process(double delta) {

@@ -1,26 +1,18 @@
-[gd_scene load_steps=7 format=3 uid="uid://bhv7m2ig2tkg8"]
+[gd_scene load_steps=5 format=3 uid="uid://bhv7m2ig2tkg8"]
 
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_vl7sy"]
-[ext_resource type="Script" uid="uid://iogv5dao5ogo" path="res://Assets/Scripts/BlockBehaviorScripts/Default.cs" id="2_bhk8m"]
 [ext_resource type="ArrayMesh" uid="uid://c7ndri83186av" path="res://Assets/Blocks/Models/BlockSingleTexture.obj" id="2_cr1us"]
 [ext_resource type="Texture2D" uid="uid://c847lhgmhpppg" path="res://Assets/Blocks/Textures/Bedrock.png" id="3_t8ovi"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_bensk"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q27ap"]
 resource_local_to_scene = true
 albedo_texture = ExtResource("3_t8ovi")
 texture_filter = 2
 
-[node name="Bedrock" type="StaticBody3D" groups=["block"]]
+[node name="Bedrock" type="Node3D" groups=["block"]]
 script = ExtResource("1_vl7sy")
-BehaviorScript = ExtResource("2_bhk8m")
 Unbreakable = true
 
-[node name="CollisionShape" type="CollisionShape3D" parent="."]
-shape = SubResource("BoxShape3D_bensk")
-
 [node name="Mesh" type="CSGMesh3D" parent="."]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 mesh = ExtResource("2_cr1us")
 material = SubResource("StandardMaterial3D_q27ap")
