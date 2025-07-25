@@ -1,6 +1,7 @@
-using Godot;
+﻿using Godot;
 using Microsoft.VisualBasic;
 using System;
+using System.Drawing;
 using static Godot.HttpRequest;
 
 public partial class PlayerController : RigidBody3D {
@@ -211,7 +212,7 @@ public partial class PlayerController : RigidBody3D {
 
 	// Method to handle the collision event of HitBox
 	private void OnBodyEntered(Node body) {
-		if (body is CollisionObject3D) {
+		if (body.GetGroups().Contains("block")) {
 			// Check if the body is a ground-like object by collision layer/mask or other criteria
 			onGroundDetect = true;
 		}
@@ -277,7 +278,7 @@ public partial class PlayerController : RigidBody3D {
 			var collider = playerRayCast.GetCollider();
 			if (collider is Node node) {
 				foreach (string group in node.GetGroups()) {
-					if (group == "chunk" && client.InteractionWithBlock(collider, playerRayCast.GetCollisionPoint(), out var blockBehavior, out var blockPosition)) {
+					if (group == "block" && client.InteractionWithBlock(collider, playerRayCast.GetCollisionPoint(), playerRayCast.GetCollisionNormal(), out var blockBehavior, out var blockPosition)) {
 						// Perform actions based on input
 						if (Input.IsActionJustPressed("hit_and_remove")) {
 							client.RemoveBlock(blockPosition);
@@ -286,11 +287,11 @@ public partial class PlayerController : RigidBody3D {
 						else if (Input.IsActionJustPressed("integrate_and_place")) {
 							if (GetItemInLeftHand() != "" && !Input.IsActionPressed("sneek")) {
 								Vector3 normal = playerRayCast.GetCollisionNormal();
-								Vector3I newBlockPose = new Vector3I(
-									Mathf.RoundToInt(blockPosition.X + normal.X), 
-									Mathf.RoundToInt(blockPosition.Y + normal.Y),
-                                    Mathf.RoundToInt(blockPosition.Z + normal.Z)
-                                    );
+								blockPosition += new Vector3I(
+									Mathf.RoundToInt(normal.X), 
+									Mathf.RoundToInt(normal.Y), 
+									Mathf.RoundToInt(normal.Z)
+								);
 
                                 BlockData newBlock = Register.BlockDataMap[GetItemInLeftHand()];
 
@@ -306,7 +307,7 @@ public partial class PlayerController : RigidBody3D {
 										rotation.Y = 0;
 								}*/
 
-								client.SetBlock(newBlock, newBlockPose);
+								client.SetBlock(newBlock, blockPosition);
 							}
 							else
                                 blockBehavior.OnClick();

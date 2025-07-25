@@ -18,15 +18,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20, 0)
 unique_name_in_owner = true
 script = ExtResource("3_5crva")
 
-[node name="ChunkRenderer" type="Node3D" parent="World"]
+[node name="ChunkRenderer" type="GridMap" parent="World"]
 unique_name_in_owner = true
 script = ExtResource("4_xoegg")
 
-[node name="BlcokHighlight" type="Node3D" parent="."]
+[node name="BlockHighlight" type="Node3D" parent="."]
 unique_name_in_owner = true
 visible = false
 
-[node name="CSGMesh3D" type="CSGMesh3D" parent="BlcokHighlight"]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
+[node name="CSGMesh3D" type="CSGMesh3D" parent="BlockHighlight"]
 mesh = ExtResource("5_gx7ox")
 material = ExtResource("6_5crva")

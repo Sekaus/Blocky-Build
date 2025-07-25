@@ -11,10 +11,10 @@ using static System.Reflection.Metadata.BlobBuilder;
 public class Chunk {
     public readonly Vector3I Position;
     // Pure data: which block type belongs at which coordinate
-    private readonly System.Collections.Generic.Dictionary<Vector3I, BlockData> _rawBlocks = new();
-    public System.Collections.Generic.Dictionary<Vector3I, BlockData> Blocks {
-        get { 
-            return _rawBlocks; 
+    private readonly ConcurrentDictionary<Vector3I, BlockData> _rawBlocks = new();
+    public ConcurrentDictionary<Vector3I, BlockData> Blocks {
+        get {
+            return _rawBlocks;
         }
     }
 
@@ -31,50 +31,45 @@ public class Chunk {
         var offset = Position * GameSettings.ChunkRadius;
         int atLayer = GameSettings.DefaultBedrockLevel;
 
-        foreach (var layer in worldLayers[(int)worldData.Type]) {
+        var layerDefs = worldLayers[(int)worldData.Type];
+
+        foreach (var layer in layerDefs) {
+            var blockData = Register.BlockDataMap[layer.blockName];
             for (int y = atLayer; y < atLayer + layer.height; y++) {
                 for (int x = -GameSettings.ChunkRadius + offset.X;
                      x < GameSettings.ChunkRadius + offset.X; x++) {
                     for (int z = -GameSettings.ChunkRadius + offset.Z;
                          z < GameSettings.ChunkRadius + offset.Z; z++) {
-                        Vector3I blockPosition = new Vector3I(x, y, z);
-                        BlockData blockData = Register.BlockDataMap[layer.blockName];
-                        _rawBlocks.Add(blockPosition, blockData);
+                        Vector3I pos = new Vector3I(x, y, z);
+                        _rawBlocks.TryAdd(pos, blockData);
                     }
                 }
             }
             atLayer += layer.height;
         }
 
+        var airBlock = new BlockData();
+
         _dataReady.TrySetResult(true);
     }
 
-    public void AddBlock(Vector3I blockPosition, BlockData blockData) {
-        _rawBlocks.Add(blockPosition, blockData);
+    public bool IsAirAt(Vector3I pos) {
+        return !_rawBlocks.TryGetValue(pos, out var data) || data.BlockName == "air";
     }
 
-    public void RemoveBlock(Vector3I blockPosition) { 
-        _rawBlocks.Remove(blockPosition); 
+    public void AddBlock(Vector3I pos, BlockData blockData) {
+        if (IsAirAt(pos)) {
+            _rawBlocks[pos] = blockData;
+        }
+        else if (_rawBlocks.TryGetValue(pos, out var oldData)) {
+            _rawBlocks.TryUpdate(pos, blockData, oldData);
+        }
     }
 
-    public bool hashBlockAt(Vector3I blockPosition) {
-        return _rawBlocks.ContainsKey(blockPosition);
+    public void RemoveBlock(Vector3I pos) {
+        if (_rawBlocks.TryGetValue(pos, out var oldData)) {
+            // Replace with air by removing the key entirely
+            _rawBlocks.TryRemove(pos, out _);
+        }
     }
-
-    /*public void CullChunk() {
-        Parallel.ForEach(_rawBlocks, block => {
-            int X = block.Key.X;
-            int Y = block.Key.Y;
-            int Z = block.Key.Z;
-            bool isExposed = !_rawBlocks.ContainsKey(new(X + 1, Y, Z)) ||
-                             !_rawBlocks.ContainsKey(new(X - 1, Y, Z)) ||
-                             !_rawBlocks.ContainsKey(new(X, Y + 1, Z)) ||
-                             !_rawBlocks.ContainsKey(new(X, Y - 1, Z)) ||
-                             !_rawBlocks.ContainsKey(new(X, Y, Z + 1)) ||
-                             !_rawBlocks.ContainsKey(new(X, Y, Z - 1));
-
-            if (isExposed)
-                culledBlocks.TryAdd(block.Key, block.Value);
-        });
-    }*/
 }

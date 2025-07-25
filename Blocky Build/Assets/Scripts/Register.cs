@@ -1,5 +1,6 @@
-using Godot;
+﻿using Godot;
 using System;
+using System.Collections.Generic;
 using static System.Reflection.Metadata.BlobBuilder;
 
 // This is the register over all content in this game
@@ -146,6 +147,64 @@ public partial class Register : Node {
         blockInstance.QueueFree();
 
         return newItem;
+    }
+
+    public static MeshLibrary CreateMeshLibraryForBlocks() {
+        var lib = new MeshLibrary();
+        int nextId = 0;
+
+        foreach (var kv in BlockDataMap) {
+            var data = kv.Value;
+
+            var csg = data.CsgMesh3D;
+            if (csg == null || csg.Mesh == null)
+                continue;
+
+            var mesh = csg.Mesh.Duplicate() as ArrayMesh;
+            var mat = csg.Material;
+
+            for (int s = 0; s < mesh.GetSurfaceCount(); s++)
+                mesh.SurfaceSetMaterial(s, mat);
+
+            lib.CreateItem(nextId);
+            lib.SetItemName(nextId, data.BlockName);
+            lib.SetItemMesh(nextId, mesh);
+
+            var concave = new ConcavePolygonShape3D {
+                Data = ExtractTriangles(mesh)
+            };
+            var shapes = new Godot.Collections.Array();
+            shapes.Add(concave);
+            lib.SetItemShapes(nextId, shapes);
+
+            nextId++;
+        }
+
+        return lib;
+    }
+
+
+    /// <summary>
+    /// Given an ArrayMesh, extract all triangles into a flat Vector3[].
+    /// </summary>
+    private static Vector3[] ExtractTriangles(ArrayMesh mesh) {
+        var tris = new List<Vector3>();
+
+        // For each surface:
+        for (int s = 0; s < mesh.GetSurfaceCount(); s++) {
+            var arr = mesh.SurfaceGetArrays(s);
+            var verts = (Vector3[])arr[(int)ArrayMesh.ArrayType.Vertex];
+            var indices = (int[])arr[(int)ArrayMesh.ArrayType.Index];
+
+            // Every 3 indices is a triangle:
+            for (int i = 0; i < indices.Length; i += 3) {
+                tris.Add(verts[indices[i + 0]]);
+                tris.Add(verts[indices[i + 1]]);
+                tris.Add(verts[indices[i + 2]]);
+            }
+        }
+
+        return tris.ToArray();
     }
 
     public override void _EnterTree() {

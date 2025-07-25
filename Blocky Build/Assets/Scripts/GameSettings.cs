@@ -19,15 +19,21 @@ public class GameSettings {
         } 
     }
 
-    public static float ChunkSize {
-        get {
-            return ChunkRadius * BlockRenderScale;
-        }
-    }
-
     public static int BlockRenderScale {
         get {
             return 2;
+        }
+    }
+
+    public static int ChunkSizeXZ {
+        get {
+            return GameSettings.ChunkRadius * 2 + 1;
+        }
+    }
+
+    public static float ChunkSizeInRender {
+        get {
+            return ChunkRadius * BlockRenderScale;
         }
     }
 
