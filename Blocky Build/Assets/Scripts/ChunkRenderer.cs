@@ -56,19 +56,38 @@ public partial class ChunkRenderer : GridMap {
     /// Add or replace a single block.
     /// </summary>
     public void SetBlock(Vector3I globalPos, BlockData data) {
-        SetCellItem(ToLocal(globalPos), _tileIndex[data.BlockName]);
+        int orientation = GetOrthogonalIndexFromBasis(data.Basis.Orthonormalized());
+
+        if (!_tileIndex.TryGetValue(data.BlockName, out int tileId)) {
+            GD.PrintErr($"Unknown tile: {data.BlockName}");
+            return;
+        }
+
+        if (orientation == -1) {
+            GD.PrintErr($"Invalid rotation basis for block {data.BlockName} @ {globalPos}");
+            return;
+        }
+
+        SetCellItem(ToLocal(globalPos), tileId, orientation);
     }
 
     /// <summary>
     /// Remove a single block.
     /// </summary>
     public void RemoveBlock(Vector3I globalPos) {
-        SetCellItem(ToLocal(globalPos), -1); // clear
+        SetCellItem(ToLocal(globalPos), -1);
     }
 
     Vector3I ToLocal(Vector3I globalPos) {
-        var chunkOffset = globalPos / (GameSettings.ChunkRadius * GameSettings.BlockRenderScale);
-        var local = globalPos - chunkOffset * (GameSettings.ChunkRadius * GameSettings.BlockRenderScale);
-        return local;
+        // Proper chunk size in blocks, not in world units
+        int chunkSize = GameSettings.ChunkSizeXZ;
+
+        Vector3I chunkOrigin = new Vector3I(
+            (globalPos.X / chunkSize) * chunkSize,
+            (globalPos.Y / chunkSize) * chunkSize,
+            (globalPos.Z / chunkSize) * chunkSize
+        );
+
+        return globalPos - chunkOrigin;
     }
 }

@@ -101,7 +101,16 @@ public partial class Register : Node {
         }
 
         public object ToObject() => value;
-        public T To<T>() => (T)value;
+        public T To<T>() {
+            if (value is T t)
+                return t;
+
+            // Handle dictionary fallback
+            if (value is Dictionary<string, T> dict && dict.TryGetValue("Default", out var defaultVal))
+                return defaultVal;
+
+            throw new InvalidCastException($"Unable to cast value of type '{value.GetType().Name}' to '{typeof(T).Name}'.");
+        }
     }
 
     // Load in block instance as item
@@ -141,14 +150,18 @@ public partial class Register : Node {
         foreach (var kv in BlockDataMap) {
             var regVar = kv.Value;
 
+            // Case 1: Single BlockData
             if (regVar.ToObject() is BlockData data) {
                 TryAddBlockMesh(lib, data, ref nextId);
             }
-            else if (regVar.ToObject() is Dictionary<string, object> dict) {
-                foreach (var obj in dict.Values) {
-                    if (obj is BlockData nestedData)
-                        TryAddBlockMesh(lib, nestedData, ref nextId);
+            // Case 2: Dictionary<string, BlockData>
+            else if (regVar.ToObject() is Dictionary<string, BlockData> blockDict) {
+                foreach (var nestedData in blockDict.Values) {
+                    TryAddBlockMesh(lib, nestedData, ref nextId);
                 }
+            }
+            else {
+                GD.PushWarning($"Unexpected type in BlockDataMap: {regVar.ToObject()?.GetType().Name}");
             }
         }
 
@@ -214,11 +227,11 @@ public partial class Register : Node {
         // Load in blocks
         foreach (PackedScene blockScene in BlockScenes) {
             Block blockSceneInstance = blockScene.Instantiate<Block>();
-            RegisterVariant data = new RegisterVariant(new BlockData(blockSceneInstance));
+            RegisterVariant dataVariant = new RegisterVariant(new BlockData(blockSceneInstance));
 
             if (blockSceneInstance.VariationOfBlock == "") {
                 Blocks.Add(blockSceneInstance.BlockName, new RegisterVariant(blockScene));
-                BlockDataMap.Add(blockSceneInstance.BlockName, data);
+                BlockDataMap.Add(blockSceneInstance.BlockName, dataVariant);
             }
             else {
                 if (Blocks.ContainsKey(blockSceneInstance.VariationOfBlock)) {
@@ -235,7 +248,7 @@ public partial class Register : Node {
 
                 if (Blocks[blockSceneInstance.VariationOfBlock].ToObject() is Dictionary<string, PackedScene> dict) {
                     dict[keyName] = blockScene;
-                    BlockDataMap[keyName] = data;
+                    BlockDataMap[keyName] = dataVariant;
                 }
                 else
                     throw new InvalidOperationException($"Expected dictionary but found {Blocks[blockSceneInstance.VariationOfBlock].ToObject().GetType().Name}");

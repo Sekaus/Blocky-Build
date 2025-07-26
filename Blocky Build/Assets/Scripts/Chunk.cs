@@ -99,67 +99,55 @@ public class Chunk {
             }
             else if (connectionToBlockRight && connectionToBlockLeft && connectionToBlockForward) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedB"].To<BlockData>();
-                blockThatExecute.Basis.Rotated(Vector3.Up, Mathf.DegToRad(-90));
-                blockThatExecute.FacingDirection = Block.FacingDirections.Forward;
+                blockThatExecute.Rotate(Vector3.Up * Mathf.DegToRad(-90));
             }
             else if (connectionToBlockRight && connectionToBlockLeft && connectionToBlockBackward) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedB"].To<BlockData>();
-                blockThatExecute.Basis.Rotated(Vector3.Up, Mathf.DegToRad(90));
-                blockThatExecute.FacingDirection = Block.FacingDirections.Backward;
+                blockThatExecute.Rotate(Vector3.Up * Mathf.DegToRad(90));
             }
             else if (connectionToBlockRight && connectionToBlockForward && connectionToBlockBackward) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedB"].To<BlockData>();
-                blockThatExecute.FacingDirection = Block.FacingDirections.Right;
             }
             else if (connectionToBlockLeft && connectionToBlockForward && connectionToBlockBackward) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedB"].To<BlockData>();
-                blockThatExecute.Basis.Rotated(Vector3.Up, Mathf.DegToRad(180));
-                blockThatExecute.FacingDirection = Block.FacingDirections.Left;
+                blockThatExecute.Rotate(Vector3.Up * Mathf.DegToRad(180));
             }
             else if (connectionToBlockForward && connectionToBlockBackward) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedMeddel"].To<BlockData>();
-                blockThatExecute.Basis.Rotated(Vector3.Up, Mathf.DegToRad(90));
+                blockThatExecute.Rotate(Vector3.Up * Mathf.DegToRad(90));
             }
             else if (connectionToBlockRight && connectionToBlockLeft) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedMeddel"].To<BlockData>();
             }
             else if (connectionToBlockLeft && connectionToBlockForward) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedD"].To<BlockData>();
-                blockThatExecute.Basis.Rotated(Vector3.Up, Mathf.DegToRad(-90));
-                blockThatExecute.FacingDirection = Block.FacingDirections.Left;
+                blockThatExecute.Rotate(Vector3.Up * Mathf.DegToRad(-90));
             }
             else if (connectionToBlockRight && connectionToBlockForward) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedD"].To<BlockData>();
-                blockThatExecute.FacingDirection = Block.FacingDirections.Forward;
             }
             else if (connectionToBlockLeft && connectionToBlockBackward) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedD"].To<BlockData>();
-                blockThatExecute.Basis.Rotated(Vector3.Up, Mathf.DegToRad(180));
-                blockThatExecute.FacingDirection = Block.FacingDirections.Backward;
+                blockThatExecute.Rotate(Vector3.Up * Mathf.DegToRad(180));
             }
             else if (connectionToBlockRight && connectionToBlockBackward) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedD"].To<BlockData>();
-                blockThatExecute.Basis.Rotated(Vector3.Up, Mathf.DegToRad(90));
-                blockThatExecute.FacingDirection = Block.FacingDirections.Right;
+                blockThatExecute.Rotate(Vector3.Up * Mathf.DegToRad(90));
             }
             else if (connectionToBlockForward) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedA"].To<BlockData>();
-                blockThatExecute.Basis.Rotated(Vector3.Up, Mathf.DegToRad(-90));
-                blockThatExecute.FacingDirection = Block.FacingDirections.Forward;
+                blockThatExecute.Rotate(Vector3.Up * Mathf.DegToRad(-90));
             }
             else if (connectionToBlockBackward) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedA"].To<BlockData>();
-                blockThatExecute.Basis.Rotated(Vector3.Up, Mathf.DegToRad(90));
-                blockThatExecute.FacingDirection = Block.FacingDirections.Backward;
+                blockThatExecute.Rotate(Vector3.Up * Mathf.DegToRad(90));
             }
             else if (connectionToBlockRight) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedA"].To<BlockData>();
-                blockThatExecute.FacingDirection = Block.FacingDirections.Right;
             }
             else if (connectionToBlockLeft) {
                 blockThatExecute = Register.BlockDataMap[blockName]["ConnectedA"].To<BlockData>();
-                blockThatExecute.Basis.Rotated(Vector3.Up, Mathf.DegToRad(180));
-                blockThatExecute.FacingDirection = Block.FacingDirections.Left;
+                blockThatExecute.Rotate(Vector3.Up * Mathf.DegToRad(180));
             }
         }
         else if (blockThatExecute.Type == Block.BlockType.Roof || blockThatExecute.Type == Block.BlockType.Stairs) {
@@ -239,17 +227,14 @@ public class Chunk {
     }
 
     // Run at multiple block updates
-    public void UpdateBlocks(System.Collections.Generic.Dictionary<Vector3I, BlockData> blocksToUpdate) {
+    public void UpdateBlocks(HashSet<Vector3I> blocksToUpdate) {
         if (blocksToUpdate != null || blocksToUpdate.Count > 0) {
-            foreach (var block in blocksToUpdate) {
-                if (block.Value.Type == Block.BlockType.Fence || block.Value.Type == Block.BlockType.Roof || block.Value.Type == Block.BlockType.Stairs) {
-                    Vector3I blockPosition = new Vector3I(Mathf.RoundToInt(block.Key.X), Mathf.RoundToInt(block.Key.Y), Mathf.RoundToInt(block.Key.Z));
+            foreach (var position in blocksToUpdate) {
+                BlockData selectedBlock = _rawBlocks[position];
+                if (selectedBlock.Type == Block.BlockType.Fence || selectedBlock.Type == Block.BlockType.Roof || selectedBlock.Type == Block.BlockType.Stairs) {
+                    Vector3I blockPosition = new Vector3I(Mathf.RoundToInt(position.X), Mathf.RoundToInt(position.Y), Mathf.RoundToInt(position.Z));
 
-                    block.Value.Basis = new Basis(block.Value.Basis.GetRotationQuaternion());
-                    block.Value.UpsideDown = block.Value.UpsideDown;
-                    block.Value.FacingDirection = block.Value.FacingDirection;
-
-                    UpdateConnectedBlock(blockPosition, block.Value);
+                    UpdateConnectedBlock(blockPosition, selectedBlock);
                 }
             }
         }

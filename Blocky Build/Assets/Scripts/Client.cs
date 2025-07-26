@@ -20,7 +20,7 @@ public partial class Client : Node {
     Node3D blockHighlight;
 
     // Set block in world
-    public void SetBlock(BlockData blockData, Vector3I blockPosition, bool runBlockUpdates = true, Vector3 rotation = new Vector3()) {
+    public void SetBlock(BlockData blockData, Vector3I blockPosition, bool runBlockUpdates = true) {
         if (blockPosition.Y < 0 || blockPosition.Y >= GameSettings.ChunkHeight)
             return;
 
@@ -32,7 +32,6 @@ public partial class Client : Node {
         var chunk = chunkRes.Item2;
 
         if (!chunk.Blocks.ContainsKey(blockPosition)) {
-            blockData.Rotate(rotation);
             chunk.AddBlock(blockPosition, blockData);
             chunkRenderer.SetBlock(blockPosition, blockData);
         }

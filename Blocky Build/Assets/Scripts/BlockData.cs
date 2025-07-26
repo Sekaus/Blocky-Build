@@ -1,5 +1,5 @@
 ﻿using Godot;
-using System.Net.Sockets;
+using static Block;
 
 public class BlockData {
     public string BlockName { get; } = "air";
@@ -9,67 +9,59 @@ public class BlockData {
     public bool CanBeConnected { get; }
     public bool Unbreakable { get; }
     public bool BlocksCanBePlacedOn { get; }
-    public Block.FacingDirections FacingDirection { get; set; }
-    public bool UpsideDown { get; set; }
+    public Block.FacingDirections FacingDirection { get; private set; }
+    public bool UpsideDown { get; private set; }
     public CSharpScript BehaviorScript { get; }
     public CsgMesh3D CsgMesh3D { get; }
-    public Basis Basis { get; set; }
+    public Basis Basis { get; private set; }
 
     public BlockData() { }
 
     // Rotate a block at xyz (hole turns)
-    public void Rotate(Vector3 rotationDegrees) {
-        // If there's no rotation at all, bail out
-        if (rotationDegrees == Vector3.Zero)
-            return;
+    public void Rotate(Vector3 rotationDeg) {
+        // Snap each component to 90°
+        Vector3 snapped = new Vector3(
+            Mathf.Round(rotationDeg.X / 90f) * 90f,
+            Mathf.Round(rotationDeg.Y / 90f) * 90f,
+            Mathf.Round(rotationDeg.Z / 90f) * 90f
+        );
 
-        // rotationDegrees.Y encodes the 'up‑flip' (0, 90 or 180)
-        bool upsideDown = rotationDegrees.Y != 0;
-        float radUp = Mathf.DegToRad(rotationDegrees.Y);
+        // Convert degrees to radians
+        Vector3 radians = snapped * Mathf.DegToRad(1.0f);
 
-        // X‑axis turns (roll left/right)
-        if (rotationDegrees.X != 0) {
-            FacingDirection = (rotationDegrees.X > 0)
-                ? Block.FacingDirections.Left
-                : Block.FacingDirections.Right;
+        // Build basis from Euler angles (YXZ order = yaw, pitch, roll)
+        Basis b = Basis.FromEuler(radians);
 
-            // 180° yaw when rotating negatively around X
-            if (rotationDegrees.X < 0)
-                Basis.Rotated(Vector3.Up, Mathf.DegToRad(180));
+        // Orthonormalize to make sure it’s clean (important!)
+        Basis = b.Orthonormalized();
 
-            // do the “up‑flip” if requested
-            if (upsideDown)
-                Basis.Rotated(
-                    rotationDegrees.X > 0 ? Vector3.Forward : Vector3.Back,
-                    radUp
-                );
-        }
-        // Z‑axis turns (yaw forward/back)
-        else if (rotationDegrees.Z != 0) {
-            FacingDirection = (rotationDegrees.Z > 0)
-                ? Block.FacingDirections.Forward
-                : Block.FacingDirections.Backward;
+        // Optional: set flag for upside down
+        UpsideDown = !Mathf.IsZeroApprox(snapped.X);
 
-            Basis.Rotated(
-                Vector3.Up,
-                Mathf.DegToRad(rotationDegrees.Z > 0 ? -90 : 90)
-            );
-
-            if (upsideDown)
-                Basis.Rotated(
-                    rotationDegrees.Z > 0 ? Vector3.Right : Vector3.Left,
-                    radUp
-                );
-        }
-        // Pure “up‑flip” around the forward axis
-        else if (upsideDown) {
-            Basis.Rotated(Vector3.Forward, radUp);
+        switch ((int)snapped.Y % 360) {
+            case 0:
+                FacingDirection = Block.FacingDirections.Forward;
+                break;
+            case 90:
+            case -270:
+                FacingDirection = Block.FacingDirections.Right;
+                break;
+            case 180:
+            case -180:
+                FacingDirection = Block.FacingDirections.Backward;
+                break;
+            case 270:
+            case -90:
+                FacingDirection = Block.FacingDirections.Left;
+                break;
+            default:
+                GD.PrintErr($"Unexpected Y: {(int)snapped.Y}");
+                FacingDirection = Block.FacingDirections.Forward; // fallback
+                break;
         }
 
-        // finally mark the block as upside‑down if we rolled it
-        if (upsideDown)
-            UpsideDown = true;
     }
+
 
     public BlockData(Block source) {
         BlockName = source.BlockName;

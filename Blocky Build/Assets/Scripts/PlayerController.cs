@@ -295,19 +295,42 @@ public partial class PlayerController : RigidBody3D {
 
                                 BlockData newBlock = Register.BlockDataMap[GetItemInLeftHand()].To<BlockData>();
 
-								// Rotate the new block if it use rotation
-								/*Vector3 rotation;
-								if (newBlock.Type != Block.BlockType.Roof && newBlock.Type != Block.BlockType.Stairs && newBlock.Type != Block.BlockType.Door)
-									rotation = Vector3.Zero;
-								else {
-									rotation = -Position.DirectionTo(newBlockPose).Round() + normal;
-									if (newBlock.Type != Block.BlockType.Door)
-										rotation.Y = Mathf.Clamp(-playerCamera.Basis.Z.Y, 0, 1);
-									else
-										rotation.Y = 0;
-								}*/
+                                // Rotate the new block if it use rotation
+                                if (newBlock.Type == Block.BlockType.Roof ||
+									newBlock.Type == Block.BlockType.Stairs ||
+									newBlock.Type == Block.BlockType.Door) {
 
-								client.SetBlock(newBlock, blockPosition);
+                                    // A) For yaw: use +X as forward because your models face +X
+                                    Vector3 xFwd = -playerCamera.GlobalTransform.Basis.X.Normalized();
+
+                                    // B) For pitch: use Z to check if we're looking up/down
+                                    Vector3 zFwd = -playerCamera.GlobalTransform.Basis.Z.Normalized();
+
+                                    // 1) Yaw rotation (snap to 90°)
+                                    float rawYaw = Mathf.RadToDeg(Mathf.Atan2(xFwd.X, xFwd.Z));
+                                    float snappedYaw = Mathf.Round(rawYaw / 90f) * 90f;
+
+                                    // 2) Pitch — from Z forward axis
+                                    float pitch = Mathf.RadToDeg(Mathf.Asin(zFwd.Y));
+
+                                    // 3) Flip upside down if we're looking up steeply
+                                    float flipX = (pitch > 60f) ? 180f : 0f;
+
+                                    // 4) Doors should never flip
+                                    float finalX = (newBlock.Type == Block.BlockType.Door) ? 0f : flipX;
+                                    float finalY = snappedYaw;
+                                    float finalZ = 0f;
+
+                                    Vector3 rotationDeg = new Vector3(finalX, finalY, finalZ);
+
+                                    // 5) Apply the rotation to the block
+                                    newBlock.Rotate(rotationDeg);
+
+                                    // 6) Place the block
+                                    client.SetBlock(newBlock, blockPosition);
+                                }
+
+                                client.SetBlock(newBlock, blockPosition);
 							}
 							else
                                 blockBehavior.OnClick();
