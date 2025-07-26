@@ -9,53 +9,42 @@ public partial class Register : Node {
 
     [Export]
     public PackedScene[] BlockScenes;
-    public static Godot.Collections.Dictionary<string, RegisterVariant> Blocks  = new Godot.Collections.Dictionary<string, RegisterVariant>();
-    public static readonly System.Collections.Generic.Dictionary<string, BlockData> BlockDataMap = new();
+    public static System.Collections.Generic.Dictionary<string, RegisterVariant> Blocks = new();
+    public static readonly System.Collections.Generic.Dictionary<string, RegisterVariant> BlockDataMap = new();
 
     [Export]
     public PackedScene[] ItemScenes;
-    public static Godot.Collections.Dictionary<string, RegisterVariant> Items = new Godot.Collections.Dictionary<string, RegisterVariant>();
+    public static System.Collections.Generic.Dictionary<string, RegisterVariant> Items = new();
 
     [Export]
     public PackedScene[] GUIElementScenes;
-    public static Godot.Collections.Dictionary<string, PackedScene> GUIElements = new Godot.Collections.Dictionary<string, PackedScene>();
+    public static System.Collections.Generic.Dictionary<string, PackedScene> GUIElements = new();
 
     public partial class RegisterVariant : Node {
-        private Variant variant;
+        private object value;
 
-        public RegisterVariant(Variant variant) {
-            this.variant = variant;
+        public RegisterVariant(object value) {
+            this.value = value;
         }
 
-        public PackedScene this[string key] {
+        public T Get<T>() => (T)value;
+
+        public RegisterVariant this[string key] {
             get {
-                if (variant.VariantType == Variant.Type.Dictionary) {
-                    var dict = (Godot.Collections.Dictionary)variant;
-                    if (dict.ContainsKey(key)) {
-                        if (dict[key].Obj is Godot.Collections.Dictionary nestedDict && nestedDict.ContainsKey(key)) {
-                            if (nestedDict[key].Obj is PackedScene nestedScene)
-                                return nestedScene;
-                            else
-                                throw new Exception($"Key '{key}' exists but is not a PackedScene.");
-                        }
-                        else if (dict[key].Obj is PackedScene scene)
-                            return scene;
-                        else
-                            throw new Exception($"Key '{key}' exists but is not a PackedScene.");
+                if (value is Dictionary<string, object> dict && dict.TryGetValue(key, out var obj)) {
+                    if (obj is Dictionary<string, object> nestedDict && nestedDict.TryGetValue(key, out var nestedObj)) {
+                        if (nestedObj is RegisterVariant nestedRegisterVariant)
+                            return nestedRegisterVariant;
+                        throw new Exception($"Nested value at '{key}' is not a RegisterVariant.");
                     }
-                    else
-                        throw new Exception($"Key '{key}' not found in the dictionary.");
                 }
-                else
-                    throw new InvalidOperationException($"Variant is not a Godot.Collections.Dictionary.");
+                throw new InvalidOperationException("RegisterVariant does not contain a Dictionary.");
             }
             set {
-                if (variant.VariantType == Variant.Type.Dictionary) {
-                    var dict = (Godot.Collections.Dictionary)variant;
+                if (this.value is Dictionary<string, object> dict)
                     dict[key] = value;
-                }
                 else
-                    throw new InvalidOperationException($"Cannot set variant for '{key}' (not a Godot.Collections.Dictionary).");
+                    throw new InvalidOperationException("RegisterVariant does not contain a Dictionary.");
             }
         }
 
@@ -63,21 +52,23 @@ public partial class Register : Node {
             Type typeOfT = typeof(T);
             Node instance;
 
-            if (variant.Obj is PackedScene packedScene) {
+            if (value is PackedScene packedScene) {
                 instance = packedScene.Instantiate(editState);
             }
-            else if (variant.Obj is Godot.Collections.Dictionary dict && dict.ContainsKey("Default") && dict["Default"].Obj is PackedScene defaultScene) {
+            else if (value is Dictionary<string, PackedScene> packedDict &&
+                     packedDict.TryGetValue("Default", out var defaultScene)) {
                 instance = defaultScene.Instantiate(editState);
             }
             else {
-                throw new NotImplementedException("Instantiate can only be used on types of class PackedScene.");
+                throw new NotImplementedException("Instantiate can only be used on PackedScene or Dictionary<string, PackedScene>.");
             }
 
+            // Special handling for blocks-as-items
             if (typeOfT == typeof(Item)) {
                 if (instance is Block block) {
                     instance = LoadBlockAsItem(block);
                 }
-                else if (!(instance is Item)) {
+                else if (instance is not Item) {
                     throw new InvalidCastException($"Unable to cast instance of type '{instance.GetType().Name}' to type 'Item'.");
                 }
             }
@@ -85,38 +76,32 @@ public partial class Register : Node {
             return instance as T;
         }
 
-        public void Add(string key, Variant value) {
-            if (variant.VariantType == Variant.Type.Dictionary)
-                ((Godot.Collections.Dictionary)variant).Add(key, value);
+
+        public void Add(string key, object val) {
+            if (value is Dictionary<string, object> dict)
+                dict.Add(key, val);
             else
-                throw new InvalidOperationException("Cannot use .Add on non-dictionary variants.");
+                throw new InvalidOperationException("Cannot use .Add on non-dictionary RegisterVariant.");
         }
 
-        public System.Collections.Generic.ICollection<string> Keys {
+        public ICollection<string> Keys {
             get {
-                if (variant.VariantType == Variant.Type.Dictionary)
-                    return ((Godot.Collections.Dictionary<string, PackedScene>)variant).Keys;
-                else
-                    throw new NotImplementedException("Cannot use .Keys on non-dictionary variants.");
+                if (value is Dictionary<string, object> dict)
+                    return dict.Keys;
+                throw new NotSupportedException();
             }
         }
 
-        public System.Collections.Generic.ICollection<PackedScene> Values {
+        public ICollection<object> Values {
             get {
-                if (variant.VariantType == Variant.Type.Dictionary)
-                    return ((Godot.Collections.Dictionary<string, PackedScene>)variant).Values;
-                else
-                    throw new NotImplementedException("Cannot use .Values on non-dictionary variants.");
+                if (value is Dictionary<string, object> dict)
+                    return dict.Values;
+                throw new NotSupportedException();
             }
         }
 
-        public T ToVariant<T>() where T : Node {
-            return (T)variant;
-        }
-
-        public Variant ToVariant() {
-            return variant;
-        }
+        public object ToObject() => value;
+        public T To<T>() => (T)value;
     }
 
     // Load in block instance as item
@@ -154,35 +139,46 @@ public partial class Register : Node {
         int nextId = 0;
 
         foreach (var kv in BlockDataMap) {
-            var data = kv.Value;
+            var regVar = kv.Value;
 
-            var csg = data.CsgMesh3D;
-            if (csg == null || csg.Mesh == null)
-                continue;
-
-            var mesh = csg.Mesh.Duplicate() as ArrayMesh;
-            var mat = csg.Material;
-
-            for (int s = 0; s < mesh.GetSurfaceCount(); s++)
-                mesh.SurfaceSetMaterial(s, mat);
-
-            lib.CreateItem(nextId);
-            lib.SetItemName(nextId, data.BlockName);
-            lib.SetItemMesh(nextId, mesh);
-
-            var concave = new ConcavePolygonShape3D {
-                Data = ExtractTriangles(mesh)
-            };
-            var shapes = new Godot.Collections.Array();
-            shapes.Add(concave);
-            lib.SetItemShapes(nextId, shapes);
-
-            nextId++;
+            if (regVar.ToObject() is BlockData data) {
+                TryAddBlockMesh(lib, data, ref nextId);
+            }
+            else if (regVar.ToObject() is Dictionary<string, object> dict) {
+                foreach (var obj in dict.Values) {
+                    if (obj is BlockData nestedData)
+                        TryAddBlockMesh(lib, nestedData, ref nextId);
+                }
+            }
         }
 
         return lib;
     }
 
+    private static void TryAddBlockMesh(MeshLibrary lib, BlockData data, ref int nextId) {
+        var csg = data.CsgMesh3D;
+        if (csg == null || csg.Mesh == null)
+            return;
+
+        var mesh = csg.Mesh.Duplicate() as ArrayMesh;
+        var mat = csg.Material;
+
+        for (int s = 0; s < mesh.GetSurfaceCount(); s++)
+            mesh.SurfaceSetMaterial(s, mat);
+
+        lib.CreateItem(nextId);
+        lib.SetItemName(nextId, data.BlockName);
+        lib.SetItemMesh(nextId, mesh);
+
+        var concave = new ConcavePolygonShape3D {
+            Data = ExtractTriangles(mesh)
+        };
+        var shapes = new Godot.Collections.Array();
+        shapes.Add(concave);
+        lib.SetItemShapes(nextId, shapes);
+
+        nextId++;
+    }
 
     /// <summary>
     /// Given an ArrayMesh, extract all triangles into a flat Vector3[].
@@ -218,15 +214,18 @@ public partial class Register : Node {
         // Load in blocks
         foreach (PackedScene blockScene in BlockScenes) {
             Block blockSceneInstance = blockScene.Instantiate<Block>();
+            RegisterVariant data = new RegisterVariant(new BlockData(blockSceneInstance));
 
             if (blockSceneInstance.VariationOfBlock == "") {
                 Blocks.Add(blockSceneInstance.BlockName, new RegisterVariant(blockScene));
+                BlockDataMap.Add(blockSceneInstance.BlockName, data);
             }
             else {
                 if (Blocks.ContainsKey(blockSceneInstance.VariationOfBlock)) {
-                    if (Blocks[blockSceneInstance.VariationOfBlock].ToVariant().Obj is PackedScene oldBlockScene) {
+                    if (Blocks[blockSceneInstance.VariationOfBlock].ToObject() is PackedScene oldBlockScene) {
                         // Convert the single PackedScene entry to a Godot.Collections.Dictionary entry if not already done
-                        Blocks[blockSceneInstance.VariationOfBlock] = new RegisterVariant(new Godot.Collections.Dictionary { ["Default"] = oldBlockScene });
+                        Blocks[blockSceneInstance.VariationOfBlock] = new RegisterVariant(new System.Collections.Generic.Dictionary<string, PackedScene> { ["Default"] = oldBlockScene });
+                        BlockDataMap[blockSceneInstance.VariationOfBlock] = new RegisterVariant(new System.Collections.Generic.Dictionary<string, BlockData> { ["Default"] = BlockDataMap[blockSceneInstance.VariationOfBlock].To<BlockData>() });
                     }
                 }
 
@@ -234,14 +233,14 @@ public partial class Register : Node {
                 int index = keyName.IndexOf(blockSceneInstance.VariationOfBlock);
                 keyName = (index < 0) ? keyName : keyName.Remove(index, blockSceneInstance.VariationOfBlock.Length);
 
-                if (Blocks[blockSceneInstance.VariationOfBlock].ToVariant().Obj is Godot.Collections.Dictionary dict)
+                if (Blocks[blockSceneInstance.VariationOfBlock].ToObject() is Dictionary<string, PackedScene> dict) {
                     dict[keyName] = blockScene;
+                    BlockDataMap[keyName] = data;
+                }
                 else
-                    throw new InvalidOperationException($"Expected dictionary but found {Blocks[blockSceneInstance.VariationOfBlock].ToVariant().Obj.GetType().Name}");
+                    throw new InvalidOperationException($"Expected dictionary but found {Blocks[blockSceneInstance.VariationOfBlock].ToObject().GetType().Name}");
             }
 
-            var data = new BlockData(blockSceneInstance);
-            BlockDataMap[blockSceneInstance.BlockName] = data;
             blockSceneInstance.QueueFree();
         }
 

@@ -293,7 +293,7 @@ public partial class PlayerController : RigidBody3D {
 									Mathf.RoundToInt(normal.Z)
 								);
 
-                                BlockData newBlock = Register.BlockDataMap[GetItemInLeftHand()];
+                                BlockData newBlock = Register.BlockDataMap[GetItemInLeftHand()].To<BlockData>();
 
 								// Rotate the new block if it use rotation
 								/*Vector3 rotation;
