@@ -7,6 +7,8 @@
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cwdaw"]
 resource_local_to_scene = true
 albedo_texture = ExtResource("3_7a6q6")
+albedo_texture_force_srgb = true
+metallic_specular = 0.0
 texture_filter = 2
 
 [node name="GrassBlock" type="Node3D" groups=["block"]]

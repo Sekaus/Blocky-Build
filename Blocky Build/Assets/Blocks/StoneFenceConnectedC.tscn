@@ -7,6 +7,8 @@
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2ee41"]
 resource_local_to_scene = true
 albedo_texture = ExtResource("3_gqvk4")
+metallic_specular = 0.0
+texture_filter = 2
 
 [node name="StoneFenceConnectedC" type="Node3D" groups=["block"]]
 script = ExtResource("1_23vpi")

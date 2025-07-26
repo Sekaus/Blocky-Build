@@ -7,6 +7,7 @@
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k2hwb"]
 transparency = 1
 albedo_texture = ExtResource("3_xffy8")
+metallic_specular = 1.0
 texture_filter = 2
 
 [node name="GlassBlock" type="Node3D" groups=["block"]]

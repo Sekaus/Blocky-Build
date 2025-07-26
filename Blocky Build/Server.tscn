@@ -10,7 +10,19 @@ sky_material = SubResource("ProceduralSkyMaterial_whbce")
 
 [sub_resource type="Environment" id="Environment_riq5v"]
 background_mode = 2
+background_energy_multiplier = 2.0
 sky = SubResource("Sky_xkk2x")
+ssr_enabled = true
+ssao_enabled = true
+ssil_enabled = true
+sdfgi_enabled = true
+sdfgi_use_occlusion = true
+sdfgi_y_scale = 0
+glow_enabled = true
+volumetric_fog_enabled = true
+volumetric_fog_anisotropy = 0.5
+volumetric_fog_length = 7.5
+adjustment_enabled = true
 
 [sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_qgpvk"]
 
