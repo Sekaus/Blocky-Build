@@ -2,11 +2,26 @@
 
 [ext_resource type="ArrayMesh" uid="uid://uru58n8kf7lc" path="res://Assets/Blocks/Models/Grass.obj" id="1_1krae"]
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_ar1l1"]
-[ext_resource type="Texture2D" uid="uid://dnq528sonc1op" path="res://Assets/Blocks/Textures/GrassBlock.png" id="3_2md05"]
+[ext_resource type="Shader" uid="uid://d2u40exooiii1" path="res://Assets/Shaders/Default.gdshader" id="3_sbi2p"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q53pr"]
-resource_local_to_scene = true
-albedo_texture = ExtResource("3_2md05")
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_lx06c"]
+render_priority = 0
+shader = ExtResource("3_sbi2p")
+shader_parameter/albedo = Color(0, 0, 0, 1)
+shader_parameter/force_srgb = false
+shader_parameter/alpha = false
+shader_parameter/albedo_texture_size = Vector2i(0, 0)
+shader_parameter/point_size = 0.0
+shader_parameter/roughness = 0.0
+shader_parameter/metallic_texture_channel = Vector4(0, 0, 0, 0)
+shader_parameter/specular = 0.0
+shader_parameter/metallic = 0.0
+shader_parameter/emission = Color(0, 0, 0, 1)
+shader_parameter/emission_energy = 0.0
+shader_parameter/uv1_scale = Vector3(0, 0, 0)
+shader_parameter/uv1_offset = Vector3(0, 0, 0)
+shader_parameter/uv2_scale = Vector3(0, 0, 0)
+shader_parameter/uv2_offset = Vector3(0, 0, 0)
 
 [node name="Grass" type="Node3D" groups=["block"]]
 script = ExtResource("1_ar1l1")
@@ -14,4 +29,4 @@ Tags = PackedStringArray("grass")
 
 [node name="Mesh" type="CSGMesh3D" parent="."]
 mesh = ExtResource("1_1krae")
-material = SubResource("StandardMaterial3D_q53pr")
+material = SubResource("ShaderMaterial_lx06c")

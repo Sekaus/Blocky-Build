@@ -20,6 +20,7 @@ public class Chunk {
 
     private readonly TaskCompletionSource<bool> _dataReady = new();
     public Task DataReady => _dataReady.Task;
+    VoxelLight voxelLight = new VoxelLight();
 
     public Chunk(Vector3I chunkPosition, WorldData worldData, WorldData.WorldLayer[][] worldLayers) {
         Position = chunkPosition;

@@ -52,6 +52,42 @@ public partial class ChunkRenderer : GridMap {
         }
     }
 
+    public void ApplyLighting(Chunk chunk, System.Collections.Generic.Dictionary<Vector3I, byte> lightData) {
+        var lib = this.MeshLibrary;
+
+        foreach (var kv in lightData) {
+            var pos = kv.Key;
+            byte lightLevel = kv.Value;
+
+            // Skip unlit blocks or air
+            if (!_tileIndex.TryGetValue(chunk.Blocks[pos].BlockName, out int tileId))
+                continue;
+
+            Mesh original = lib.GetItemMesh(tileId);
+            if (original == null)
+                continue;
+
+            // Duplicate mesh so we don’t affect other instances
+            var mesh = original.Duplicate() as ArrayMesh;
+            var arrays = mesh.SurfaceGetArrays(0);
+
+            var vertices = arrays[(int)Mesh.ArrayType.Vertex].As<Vector3[]>();
+            var colors = new Color[vertices.Length];
+
+            float normalized = lightLevel / 15.0f;
+
+            for (int i = 0; i < vertices.Length; i++) {
+                colors[i] = new Color(normalized, 0, 0);
+            }
+
+            arrays[(int)Mesh.ArrayType.Color] = colors;
+            mesh.SurfaceRemove(0);
+            mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays);
+
+            lib.SetItemMesh(tileId, mesh); // Overwrite this one tile
+        }
+    }
+
     /// <summary>
     /// Add or replace a single block.
     /// </summary>

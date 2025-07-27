@@ -1,15 +1,29 @@
-[gd_scene load_steps=5 format=3 uid="uid://5s7od45fec6l"]
+[gd_scene load_steps=6 format=3 uid="uid://5s7od45fec6l"]
 
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_iyfe4"]
 [ext_resource type="ArrayMesh" uid="uid://dqdipxfudh3db" path="res://Assets/Blocks/Models/Block.obj" id="2_qx6aw"]
 [ext_resource type="Texture2D" uid="uid://dnq528sonc1op" path="res://Assets/Blocks/Textures/GrassBlock.png" id="3_7a6q6"]
+[ext_resource type="Shader" uid="uid://d2u40exooiii1" path="res://Assets/Shaders/Default.gdshader" id="3_vny5h"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cwdaw"]
-resource_local_to_scene = true
-albedo_texture = ExtResource("3_7a6q6")
-albedo_texture_force_srgb = true
-metallic_specular = 0.0
-texture_filter = 2
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vny5h"]
+render_priority = 0
+shader = ExtResource("3_vny5h")
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/force_srgb = true
+shader_parameter/alpha = false
+shader_parameter/texture_albedo = ExtResource("3_7a6q6")
+shader_parameter/albedo_texture_size = Vector2i(128, 128)
+shader_parameter/point_size = 1.0
+shader_parameter/roughness = 1.0
+shader_parameter/metallic_texture_channel = Vector4(1, 0, 0, 0)
+shader_parameter/specular = 0.5
+shader_parameter/metallic = 0.0
+shader_parameter/emission = Color(0, 0, 0, 1)
+shader_parameter/emission_energy = 0.0
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/uv1_offset = Vector3(0, 0, 0)
+shader_parameter/uv2_scale = Vector3(1, 1, 1)
+shader_parameter/uv2_offset = Vector3(0, 0, 0)
 
 [node name="GrassBlock" type="Node3D" groups=["block"]]
 script = ExtResource("1_iyfe4")
@@ -17,4 +31,4 @@ Tags = PackedStringArray("grassBlock")
 
 [node name="Mesh" type="CSGMesh3D" parent="."]
 mesh = ExtResource("2_qx6aw")
-material = SubResource("StandardMaterial3D_cwdaw")
+material = SubResource("ShaderMaterial_vny5h")

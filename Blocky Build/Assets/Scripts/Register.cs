@@ -169,12 +169,22 @@ public partial class Register : Node {
     }
 
     private static void TryAddBlockMesh(MeshLibrary lib, BlockData data, ref int nextId) {
-        var csg = data.CsgMesh3D;
-        if (csg == null || csg.Mesh == null)
-            return;
-
-        var mesh = csg.Mesh.Duplicate() as ArrayMesh;
-        var mat = csg.Material;
+        ArrayMesh mesh;
+        Material mat;
+        var csg = data?.CsgMesh3D;
+        if (csg != null && csg.Mesh != null) {
+            mesh = csg.Mesh.Duplicate() as ArrayMesh;
+            mat = csg.Material;
+        }
+        else {
+            var inst = data?.MeshInstance3D;
+            if (inst != null && inst.Mesh != null) {
+                mesh = inst.Mesh.Duplicate() as ArrayMesh;
+                mat = inst.GetSurfaceOverrideMaterial(0);
+            }
+            else
+                return;
+        }
 
         for (int s = 0; s < mesh.GetSurfaceCount(); s++)
             mesh.SurfaceSetMaterial(s, mat);

@@ -13,6 +13,7 @@ public class BlockData {
     public bool UpsideDown { get; private set; }
     public CSharpScript BehaviorScript { get; }
     public CsgMesh3D CsgMesh3D { get; }
+    public MeshInstance3D MeshInstance3D { get; }
     public Basis Basis { get; private set; }
 
     public BlockData() { }
@@ -75,5 +76,6 @@ public class BlockData {
         UpsideDown = source.UpsideDown;
         BehaviorScript = source.BehaviorScript;
         CsgMesh3D = source.GetNodeOrNull<CsgMesh3D>("Mesh");
+        MeshInstance3D = source.GetNodeOrNull<MeshInstance3D>("Mesh");
     }
 }

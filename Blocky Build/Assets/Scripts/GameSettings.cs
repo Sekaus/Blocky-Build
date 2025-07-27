@@ -1,11 +1,6 @@
 public class GameSettings {
-    public const int maxCunksOnSceen = 64;
-
-    public static int MaxCunksOnSceen {
-        get {
-            return maxCunksOnSceen;
-        }
-    }
+    public const int MaxCunksOnSceen = 64;
+    public const int MaxLight = 16;
 
     public static int ChunkRadius {  
         get {
