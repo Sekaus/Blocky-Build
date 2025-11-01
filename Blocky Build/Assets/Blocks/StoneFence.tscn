@@ -1,14 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://cmjbskceaxv0s"]
+[gd_scene load_steps=4 format=3 uid="uid://cmjbskceaxv0s"]
 
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_q4tnj"]
 [ext_resource type="ArrayMesh" uid="uid://cpahufq8t8iyp" path="res://Assets/Blocks/Models/Fence.obj" id="2_3hahk"]
-[ext_resource type="Texture2D" uid="uid://5l6wi68vvt5g" path="res://Assets/Blocks/Textures/Stone.png" id="3_s52ax"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2ee41"]
-resource_local_to_scene = true
-albedo_texture = ExtResource("3_s52ax")
-metallic_specular = 0.0
-texture_filter = 2
+[ext_resource type="Material" uid="uid://cvb0eavtavtt8" path="res://Assets/Shaders/Stone.tres" id="3_1iper"]
 
 [node name="StoneFence" type="Node3D" groups=["block"]]
 script = ExtResource("1_q4tnj")
@@ -16,4 +10,4 @@ Type = 1
 
 [node name="Mesh" type="CSGMesh3D" parent="."]
 mesh = ExtResource("2_3hahk")
-material = SubResource("StandardMaterial3D_2ee41")
+material = ExtResource("3_1iper")

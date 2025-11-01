@@ -1,0 +1,23 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://cvb0eavtavtt8"]
+
+[ext_resource type="Shader" uid="uid://d2u40exooiii1" path="res://Assets/Shaders/Default.gdshader" id="1_b6rgq"]
+[ext_resource type="Texture2D" uid="uid://5l6wi68vvt5g" path="res://Assets/Blocks/Textures/Stone.png" id="2_odbj2"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_b6rgq")
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/force_srgb = false
+shader_parameter/alpha = false
+shader_parameter/texture_albedo = ExtResource("2_odbj2")
+shader_parameter/albedo_texture_size = Vector2i(0, 0)
+shader_parameter/roughness = 0.0
+shader_parameter/specular = 0.0
+shader_parameter/metallic = 0.0
+shader_parameter/metallic_texture_channel = Vector4(1, 0, 0, 0)
+shader_parameter/emission = Color(0, 0, 0, 1)
+shader_parameter/emission_energy = 0.0
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/uv1_offset = Vector3(0, 0, 0)
+shader_parameter/uv2_scale = Vector3(1, 1, 1)
+shader_parameter/uv2_offset = Vector3(0, 0, 0)

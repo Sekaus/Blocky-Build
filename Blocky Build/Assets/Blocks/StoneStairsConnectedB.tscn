@@ -1,14 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://dmdeob3uwoqdy"]
+[gd_scene load_steps=4 format=3 uid="uid://dmdeob3uwoqdy"]
 
 [ext_resource type="Script" uid="uid://p8dl8uxhlidr" path="res://Assets/Scripts/SuperClasses/Block.cs" id="1_srndf"]
 [ext_resource type="ArrayMesh" uid="uid://rmro4wmptujn" path="res://Assets/Blocks/Models/StairsConnectedB.obj" id="2_ov2qp"]
-[ext_resource type="Texture2D" uid="uid://5l6wi68vvt5g" path="res://Assets/Blocks/Textures/Stone.png" id="3_n5qf8"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jmofx"]
-resource_local_to_scene = true
-albedo_texture = ExtResource("3_n5qf8")
-metallic_specular = 0.0
-texture_filter = 2
+[ext_resource type="Material" uid="uid://cvb0eavtavtt8" path="res://Assets/Shaders/Stone.tres" id="3_sc3mm"]
 
 [node name="StoneStairsConnectedB" type="Node3D" groups=["block"]]
 script = ExtResource("1_srndf")
@@ -17,4 +11,4 @@ VariationOfBlock = "StoneStairs"
 
 [node name="Mesh" type="CSGMesh3D" parent="."]
 mesh = ExtResource("2_ov2qp")
-material = SubResource("StandardMaterial3D_jmofx")
+material = ExtResource("3_sc3mm")
