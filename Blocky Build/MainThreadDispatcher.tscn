@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://gg2rxf4njcje"]
-
-[ext_resource type="Script" uid="uid://c1lk6vej1bvv7" path="res://Assets/Scripts/MainThreadDispatcher.cs" id="1_0uvi5"]
-
-[node name="MainThreadDispatcher" type="Node"]
-script = ExtResource("1_0uvi5")

@@ -14,8 +14,7 @@ config/name="Blocky Build"
 config/description="This is a free and open-source version of Minecraft under MIT."
 config/version="v0.0a5"
 config/tags=PackedStringArray("3d", "mobile", "multiplayer", "open_source", "pc")
-run/main_scene="uid://b2kpbuloc8jjq"
-config/features=PackedStringArray("4.4", "C#", "GL Compatibility")
+config/features=PackedStringArray("4.5", "C#", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [autoload]
